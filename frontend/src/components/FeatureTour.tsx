@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { X, ChevronRight, ChevronLeft, Sparkles, Check } from "lucide-react";
+import { X, ChevronRight, ChevronLeft, Sparkles, Check, RefreshCw } from "lucide-react";
 
 export interface TourStep {
   target: string; // matches data-tour attribute
@@ -24,7 +24,7 @@ const TOUR_STEPS: TourStep[] = [
   {
     target: "run-forecast",
     title: "Generate Forecast",
-    sentence: "Runs the machine learning models to project expected prices and statistical probability ranges.",
+    sentence: "Runs our machine learning models to project expected prices and calibrated uncertainty bands.",
     placement: "bottom",
   },
   {
@@ -62,9 +62,16 @@ const TOUR_STEPS: TourStep[] = [
 interface FeatureTourProps {
   isOpen: boolean;
   onClose: () => void;
+  onRunForecast?: () => void;
+  isForecastLoading?: boolean;
 }
 
-export const FeatureTour: React.FC<FeatureTourProps> = ({ isOpen, onClose }) => {
+export const FeatureTour: React.FC<FeatureTourProps> = ({
+  isOpen,
+  onClose,
+  onRunForecast,
+  isForecastLoading,
+}) => {
   const [currentStepIdx, setCurrentStepIdx] = useState(0);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
 
@@ -95,6 +102,20 @@ export const FeatureTour: React.FC<FeatureTourProps> = ({ isOpen, onClose }) => 
       };
     }
   }, [isOpen, currentStepIdx, updateTargetPosition]);
+
+  // When on step 2 (Generate Forecast button), listen for clicks on the actual button in the DOM
+  useEffect(() => {
+    if (isOpen && currentStepIdx === 2) {
+      const btn = document.querySelector('[data-tour="run-forecast"]');
+      const handleBtnClick = () => {
+        setTimeout(() => {
+          setCurrentStepIdx(3);
+        }, 350);
+      };
+      btn?.addEventListener("click", handleBtnClick);
+      return () => btn?.removeEventListener("click", handleBtnClick);
+    }
+  }, [isOpen, currentStepIdx]);
 
   // Keyboard controls
   useEffect(() => {
@@ -134,31 +155,31 @@ export const FeatureTour: React.FC<FeatureTourProps> = ({ isOpen, onClose }) => 
     top: "50%",
     left: "50%",
     transform: "translate(-50%, -50%)",
-    maxWidth: 440,
+    maxWidth: 460,
     width: "calc(100% - 32px)",
   };
 
   if (targetRect) {
     const spaceBelow = window.innerHeight - targetRect.bottom;
     const spaceAbove = targetRect.top;
-    const cardWidth = 440;
+    const cardWidth = 460;
     const idealLeft = Math.max(
       16,
       Math.min(window.innerWidth - cardWidth - 16, targetRect.left + targetRect.width / 2 - cardWidth / 2)
     );
 
-    if (spaceBelow >= 240) {
+    if (spaceBelow >= 260) {
       cardStyle = {
         position: "fixed",
-        top: Math.min(window.innerHeight - 250, targetRect.bottom + 16),
+        top: Math.min(window.innerHeight - 280, targetRect.bottom + 16),
         left: idealLeft,
         maxWidth: cardWidth,
         width: "calc(100% - 32px)",
       };
-    } else if (spaceAbove >= 240) {
+    } else if (spaceAbove >= 260) {
       cardStyle = {
         position: "fixed",
-        top: Math.max(16, targetRect.top - 230),
+        top: Math.max(16, targetRect.top - 260),
         left: idealLeft,
         maxWidth: cardWidth,
         width: "calc(100% - 32px)",
@@ -241,10 +262,46 @@ export const FeatureTour: React.FC<FeatureTourProps> = ({ isOpen, onClose }) => 
           {currentStep.title}
         </h4>
 
-        {/* One Simple Sentence */}
-        <p className="text-sm text-ink-secondary leading-relaxed font-sans mb-6">
-          {currentStep.sentence}
-        </p>
+        {/* Dynamic Content: If Step 2, prompt user to generate forecast first */}
+        {currentStepIdx === 2 ? (
+          <div className="space-y-3 mb-5">
+            <p className="text-sm text-ink-secondary leading-relaxed font-sans">
+              Runs our machine learning models to project expected prices and calibrated uncertainty bands.
+            </p>
+            <div className="p-3.5 bg-beige-200/60 rounded-2xl border border-beige-300 shadow-tactile-well">
+              <p className="text-xs font-mono font-semibold text-ink-primary mb-2.5">
+                Generate a forecast first to bring all charts, reliability gauges, and projections to life:
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  if (onRunForecast) {
+                    onRunForecast();
+                  }
+                  setCurrentStepIdx(3);
+                }}
+                disabled={isForecastLoading}
+                className="console-glow-button w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-mono font-bold text-white shadow-clay-pill cursor-pointer"
+              >
+                {isForecastLoading ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Calculating Multi-Horizon Bounds...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Generate Forecast & Continue &rarr;</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-ink-secondary leading-relaxed font-sans mb-6">
+            {currentStep.sentence}
+          </p>
+        )}
 
         {/* Progress dots & Navigation buttons */}
         <div className="flex items-center justify-between pt-2 border-t border-beige-200">
@@ -280,7 +337,7 @@ export const FeatureTour: React.FC<FeatureTourProps> = ({ isOpen, onClose }) => 
             >
               {currentStepIdx === TOUR_STEPS.length - 1 ? (
                 <>
-                  <span>Finish</span>
+                  <span>Done</span>
                   <Check className="w-3.5 h-3.5" />
                 </>
               ) : (
@@ -296,4 +353,3 @@ export const FeatureTour: React.FC<FeatureTourProps> = ({ isOpen, onClose }) => 
     </div>
   );
 };
-

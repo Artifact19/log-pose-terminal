@@ -10,7 +10,7 @@ import { LedgerTable } from "./components/LedgerTable";
 import { StatsStrip } from "./components/StatsStrip";
 import { ModelOpsPanel } from "./components/ModelOpsPanel";
 import { FeatureTour } from "./components/FeatureTour";
-import { AuthProvider } from "./context/AuthContext";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 import { AuthModal } from "./components/AuthModal";
 import type { ForecastRunDetail } from "./types";
 
@@ -30,16 +30,17 @@ function TerminalApp() {
   const [ghostCount, setGhostCount] = useState(10);
   const [selectedRun, setSelectedRun] = useState<ForecastRunDetail | null>(null);
   const [isTourOpen, setIsTourOpen] = useState(false);
+  const { shouldLaunchTour, resetTourLaunch } = useAuth();
 
+  // Show tour ONLY when someone signs up for the first time
   useEffect(() => {
-    const hasSeenTour = localStorage.getItem("logpose_tour_completed");
-    if (!hasSeenTour) {
+    if (shouldLaunchTour) {
       setIsTourOpen(true);
+      resetTourLaunch();
     }
-  }, []);
+  }, [shouldLaunchTour, resetTourLaunch]);
 
   const handleCloseTour = () => {
-    localStorage.setItem("logpose_tour_completed", "true");
     setIsTourOpen(false);
   };
 
@@ -267,7 +268,12 @@ function TerminalApp() {
       </footer>
 
       {/* Guided Feature Tour */}
-      <FeatureTour isOpen={isTourOpen} onClose={handleCloseTour} />
+      <FeatureTour
+        isOpen={isTourOpen}
+        onClose={handleCloseTour}
+        onRunForecast={() => forecastMutation.mutate()}
+        isForecastLoading={forecastMutation.isPending}
+      />
 
       {/* Supabase Authentication & Profile Modal */}
       <AuthModal />

@@ -62,3 +62,4 @@ def require_admin(authorization: Optional[str] = Header(None)) -> Dict[str, Any]
         )
 
     return user
+

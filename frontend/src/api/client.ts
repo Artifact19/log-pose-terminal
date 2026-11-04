@@ -20,10 +20,10 @@ async function getAuthHeader(): Promise<Record<string, string>> {
       }
     } catch {}
   }
-  const mock = localStorage.getItem("logpose_mock_user");
-  if (mock) {
+  const sessionStr = localStorage.getItem("logpose_session_user") || localStorage.getItem("logpose_mock_user");
+  if (sessionStr) {
     try {
-      const u = JSON.parse(mock);
+      const u = JSON.parse(sessionStr);
       // Format a mock Bearer JWT header carrying email claim
       const headerB64 = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" }));
       const payloadB64 = btoa(JSON.stringify({ sub: u.id, email: u.email, role: "authenticated" }));

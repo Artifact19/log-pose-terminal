@@ -16,90 +16,90 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, health,
 
   return (
     <>
-      <header className="bg-beige-50/95 backdrop-blur-md border-b border-beige-300 px-6 py-3.5 shadow-clay-sm sticky top-0 z-30 transition-colors">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          {/* Logo & Brand Identity */}
-          <div className="flex items-center gap-3.5">
-            <div className="relative group">
-              <div className="w-12 h-12 rounded-2xl overflow-hidden border border-white/80 shadow-tactile-knob bg-beige-100 flex items-center justify-center transition-transform group-hover:scale-105">
+      <header className="bg-beige-50/95 backdrop-blur-md border-b border-beige-300 px-3 sm:px-6 py-2.5 sm:py-3 shadow-clay-sm sticky top-0 z-30 transition-colors">
+        <div className="w-full max-w-[1600px] mx-auto flex items-center justify-between gap-2 sm:gap-4 lg:gap-6 flex-nowrap">
+          {/* 1. Logo & Brand Identity */}
+          <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
+            <div className="relative group shrink-0">
+              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl overflow-hidden border border-white/80 shadow-tactile-knob bg-beige-100 flex items-center justify-center transition-transform group-hover:scale-105">
                 <img
                   src="/cat-logo.jpg"
                   alt="Log Pose Logo"
                   className="w-full h-full object-cover"
                 />
               </div>
-              <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-market-up rounded-full border-2 border-beige-50 shadow-xs" title="Terminal Live" />
+              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-market-up rounded-full border-2 border-beige-50 shadow-xs" title="Terminal Live" />
             </div>
 
-            <div>
+            <div className="shrink-0">
               <div className="flex items-center gap-2">
-                <span className="text-xl font-bold tracking-tight text-ink-primary font-sans">
+                <span className="text-base sm:text-lg font-bold tracking-tight text-ink-primary font-sans whitespace-nowrap">
                   Log Pose <span className="text-terracotta-500 font-extrabold">Terminal</span>
                 </span>
-                <span className="px-2 py-0.5 text-[10px] font-mono font-semibold uppercase tracking-wider rounded-lg bg-beige-200/70 text-ink-secondary border border-beige-300/80 shadow-2xs">
-                  Terminal v2.0
+                <span className="hidden sm:inline-block px-1.5 py-0.5 text-[9px] sm:text-[10px] font-mono font-semibold uppercase tracking-wider rounded-lg bg-beige-200/70 text-ink-secondary border border-beige-300/80 shadow-2xs whitespace-nowrap">
+                  v2.0
                 </span>
               </div>
-              <p className="text-xs text-ink-muted">AI Stock Navigation & Performance Verification</p>
+              <p className="hidden xl:block text-[11px] text-ink-muted whitespace-nowrap">AI Stock Navigation & Performance Verification</p>
             </div>
           </div>
 
-          {/* Navigation Switcher (Tactile Recessed Well with Extruded Buttons) */}
-          <nav data-tour="nav-tabs" className="flex items-center bg-beige-200/70 p-1.5 rounded-2xl border border-beige-300/90 shadow-tactile-well">
+          {/* 2. Navigation Switcher (Tactile Recessed Well with Extruded Buttons) */}
+          <nav data-tour="nav-tabs" className="flex items-center bg-beige-200/70 p-1 rounded-2xl border border-beige-300/90 shadow-tactile-well shrink-0">
             <button
               onClick={() => setActiveTab("terminal")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
                 activeTab === "terminal"
                   ? "bg-white text-terracotta-600 shadow-tactile-btn border-t border-white border-b-2 border-beige-300"
                   : "text-ink-secondary hover:text-ink-primary hover:bg-beige-100/50"
               }`}
             >
-              <TrendingUp className="w-4 h-4" />
-              Forecast Terminal
+              <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+              <span>Forecast Terminal</span>
             </button>
 
             <button
               onClick={() => setActiveTab("ledger")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
                 activeTab === "ledger"
                   ? "bg-white text-terracotta-600 shadow-tactile-btn border-t border-white border-b-2 border-beige-300"
                   : "text-ink-secondary hover:text-ink-primary hover:bg-beige-100/50"
               }`}
             >
-              <FileText className="w-4 h-4" />
-              Track Record & History
+              <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+              <span>Track Record & History</span>
             </button>
 
             <button
               onClick={() => setActiveTab("models")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
                 activeTab === "models"
                   ? "bg-white text-terracotta-600 shadow-tactile-btn border-t border-white border-b-2 border-beige-300"
                   : "text-ink-secondary hover:text-ink-primary hover:bg-beige-100/50"
               }`}
             >
-              <Cpu className="w-4 h-4" />
-              AI Model Status
+              <Cpu className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+              <span>AI Model Status</span>
             </button>
           </nav>
 
-          {/* System Status, User Profile & Disclaimer */}
-          <div className="flex items-center gap-3">
+          {/* 3. System Status, User Profile & Disclaimer */}
+          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 whitespace-nowrap">
             {/* Quick Tour Button */}
             {onOpenTour && (
               <button
                 onClick={onOpenTour}
-                className="tactile-pill flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-mono font-medium text-ink-primary hover:text-terracotta-600 transition-all cursor-pointer shadow-2xs"
+                className="tactile-pill flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full text-xs font-mono font-medium text-ink-primary hover:text-terracotta-600 transition-all cursor-pointer shadow-2xs shrink-0 whitespace-nowrap"
                 title="Start Interactive Feature Tour"
               >
-                <HelpCircle className="w-3.5 h-3.5 text-terracotta-500" />
+                <HelpCircle className="w-3.5 h-3.5 text-terracotta-500 shrink-0" />
                 <span>Quick Tour</span>
               </button>
             )}
 
             {/* AI Engine Status Badge */}
             <div
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium border shadow-2xs ${
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full text-xs font-medium border shadow-2xs shrink-0 whitespace-nowrap ${
                 health?.ml_exports_in_sync
                   ? "bg-emerald-50 text-emerald-800 border-emerald-200/80"
                   : "bg-amber-50 text-amber-800 border-amber-200/80"
@@ -108,22 +108,22 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, health,
             >
               {health?.ml_exports_in_sync ? (
                 <>
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>AI Engine: Verified</span>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span className="hidden md:inline">AI Engine:</span> <span>Verified</span>
                 </>
               ) : (
                 <>
-                  <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
-                  <span>AI Engine: Update Needed</span>
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                  <span className="hidden md:inline">AI Engine:</span> <span>Update Needed</span>
                 </>
               )}
             </div>
 
             {/* User Profile / Sign In Pill */}
             {user ? (
-              <div className="flex items-center gap-2 bg-beige-200/80 pl-1.5 pr-2.5 py-1 rounded-full border border-beige-300 shadow-2xs font-mono text-xs">
+              <div className="flex items-center gap-2 bg-beige-200/80 pl-1.5 pr-2.5 py-1 rounded-full border border-beige-300 shadow-2xs font-mono text-xs shrink-0 whitespace-nowrap">
                 <div
-                  className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-[10px] text-white ${
+                  className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-[10px] text-white shrink-0 ${
                     isAdmin
                       ? "bg-gradient-to-tr from-terracotta-600 to-terracotta-400"
                       : "bg-ink-secondary"
@@ -132,22 +132,18 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, health,
                   {isAdmin ? <Shield className="w-3.5 h-3.5" /> : user.email.slice(0, 2).toUpperCase()}
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="font-semibold text-ink-primary max-w-[130px] truncate" title={user.email}>
+                  <span className="font-semibold text-ink-primary max-w-[110px] sm:max-w-[130px] truncate" title={user.email}>
                     {user.email.split("@")[0]}
                   </span>
-                  {isAdmin ? (
-                    <span className="px-1.5 py-0.2 rounded-sm bg-terracotta-500 text-white font-bold text-[9px] shadow-2xs">
+                  {isAdmin && (
+                    <span className="px-1.5 py-0.2 rounded-sm bg-terracotta-500 text-white font-bold text-[9px] shadow-2xs shrink-0">
                       ADMIN
-                    </span>
-                  ) : (
-                    <span className="px-1.5 py-0.2 rounded-sm bg-beige-300 text-ink-secondary font-bold text-[9px]">
-                      USER
                     </span>
                   )}
                 </div>
                 <button
                   onClick={signOut}
-                  className="p-1 text-ink-muted hover:text-terracotta-600 rounded-lg hover:bg-beige-300/50 transition-colors cursor-pointer ml-1"
+                  className="p-1 text-ink-muted hover:text-terracotta-600 rounded-lg hover:bg-beige-300/50 transition-colors cursor-pointer ml-0.5 shrink-0"
                   title="Sign Out"
                 >
                   <LogOut className="w-3.5 h-3.5" />
@@ -156,16 +152,16 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, health,
             ) : (
               <button
                 onClick={openAuthModal}
-                className="tactile-pill flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-mono font-medium text-ink-primary hover:text-terracotta-600 transition-all cursor-pointer shadow-2xs"
+                className="tactile-pill flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-mono font-medium text-ink-primary hover:text-terracotta-600 transition-all cursor-pointer shadow-2xs shrink-0 whitespace-nowrap"
               >
-                <User className="w-3.5 h-3.5 text-terracotta-500" />
+                <User className="w-3.5 h-3.5 text-terracotta-500 shrink-0" />
                 <span>Sign In</span>
               </button>
             )}
 
             <button
               onClick={() => setShowDisclaimer(true)}
-              className="p-2 text-ink-muted hover:text-ink-primary rounded-xl hover:bg-beige-200/60 transition-colors cursor-pointer border border-transparent hover:border-beige-300"
+              className="p-1.5 text-ink-muted hover:text-ink-primary rounded-xl hover:bg-beige-200/60 transition-colors cursor-pointer border border-transparent hover:border-beige-300 shrink-0"
               title="Important Disclaimer"
             >
               <Info className="w-4 h-4" />

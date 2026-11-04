@@ -1,5 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { supabase, isSupabaseConfigured, ADMIN_EMAIL } from "../lib/supabase";
+import { supabase, isSupabaseConfigured } from "../lib/supabase";
+
+export const ADMIN_EMAIL = "arnavraut4567@gmail.com";
+export const ADMIN_PASSWORD = "28logpose19";
 
 export interface AuthUser {
   id: string;
@@ -21,32 +24,17 @@ interface AuthContextType {
   signUpWithEmail: (email: string, password: string) => Promise<{ error?: string }>;
   signInWithOAuth: (provider: "google" | "github") => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
-  loginAsDemoAdmin: () => void;
-  loginAsDemoUser: () => void;
+  shouldLaunchTour: boolean;
+  resetTourLaunch: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-const DEMO_ADMIN_USER: AuthUser = {
-  id: "admin-arnav-001",
-  email: ADMIN_EMAIL,
-  user_metadata: {
-    full_name: "Arnav Raut (Admin)",
-  },
-};
-
-const DEMO_STANDARD_USER: AuthUser = {
-  id: "user-trader-002",
-  email: "trader.user@gmail.com",
-  user_metadata: {
-    full_name: "Sample Market Trader",
-  },
-};
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [shouldLaunchTour, setShouldLaunchTour] = useState(false);
 
   useEffect(() => {
     // 1. If real Supabase credentials are present
@@ -58,6 +46,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             email: session.user.email || "",
             user_metadata: session.user.user_metadata,
           });
+        } else {
+          // Check local stored session
+          const savedSession = localStorage.getItem("logpose_session_user");
+          if (savedSession) {
+            try {
+              setUser(JSON.parse(savedSession));
+            } catch {}
+          }
         }
         setIsLoading(false);
       });
@@ -70,17 +66,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             user_metadata: session.user.user_metadata,
           });
         } else {
+          const savedSession = localStorage.getItem("logpose_session_user");
+          if (savedSession) {
+            try {
+              setUser(JSON.parse(savedSession));
+              return;
+            } catch {}
+          }
           setUser(null);
         }
       });
 
       return () => subscription.unsubscribe();
     } else {
-      // 2. Check localStorage for local simulated session
-      const savedMock = localStorage.getItem("logpose_mock_user");
-      if (savedMock) {
+      // 2. Check localStorage for session
+      const savedSession = localStorage.getItem("logpose_session_user");
+      if (savedSession) {
         try {
-          setUser(JSON.parse(savedMock));
+          setUser(JSON.parse(savedSession));
         } catch {}
       }
       setIsLoading(false);
@@ -91,49 +94,127 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     user?.email && user.email.toLowerCase().trim() === ADMIN_EMAIL.toLowerCase().trim()
   );
 
-  const signInWithEmail = async (email: string, password: string) => {
-    if (!isSupabaseConfigured || !supabase) {
-      // Local fallback simulation
-      const mockUser: AuthUser = {
-        id: `mock-${Date.now()}`,
-        email: email.trim(),
-        user_metadata: { full_name: email.split("@")[0] },
+  const signInWithEmail = async (email: string, password: string): Promise<{ error?: string }> => {
+    const normEmail = email.toLowerCase().trim();
+
+    // 1. Check for Admin credentials
+    if (normEmail === ADMIN_EMAIL.toLowerCase().trim()) {
+      if (password === ADMIN_PASSWORD) {
+        if (isSupabaseConfigured && supabase) {
+          try {
+            await supabase.auth.signInWithPassword({ email: normEmail, password });
+          } catch {}
+        }
+        const adminUser: AuthUser = {
+          id: "admin-arnavraut",
+          email: ADMIN_EMAIL,
+          user_metadata: { full_name: "Arnav Raut (Admin)" },
+        };
+        setUser(adminUser);
+        localStorage.setItem("logpose_session_user", JSON.stringify(adminUser));
+        setIsAuthModalOpen(false);
+        return {};
+      } else {
+        return { error: "Invalid password for administrator account." };
+      }
+    }
+
+    // 2. Standard user sign in
+    if (isSupabaseConfigured && supabase) {
+      const { data, error } = await supabase.auth.signInWithPassword({ email: normEmail, password });
+      if (error) return { error: error.message };
+      if (data?.user) {
+        setUser({
+          id: data.user.id,
+          email: data.user.email || normEmail,
+          user_metadata: data.user.user_metadata,
+        });
+      }
+      setIsAuthModalOpen(false);
+      return {};
+    } else {
+      // Offline / local fallback
+      const standardUser: AuthUser = {
+        id: `user-${Date.now()}`,
+        email: normEmail,
+        user_metadata: { full_name: normEmail.split("@")[0] },
       };
-      setUser(mockUser);
-      localStorage.setItem("logpose_mock_user", JSON.stringify(mockUser));
+      setUser(standardUser);
+      localStorage.setItem("logpose_session_user", JSON.stringify(standardUser));
       setIsAuthModalOpen(false);
       return {};
     }
-
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) return { error: error.message };
-    setIsAuthModalOpen(false);
-    return {};
   };
 
-  const signUpWithEmail = async (email: string, password: string) => {
-    if (!isSupabaseConfigured || !supabase) {
-      const mockUser: AuthUser = {
-        id: `mock-${Date.now()}`,
-        email: email.trim(),
-        user_metadata: { full_name: email.split("@")[0] },
-      };
-      setUser(mockUser);
-      localStorage.setItem("logpose_mock_user", JSON.stringify(mockUser));
-      setIsAuthModalOpen(false);
-      return {};
+  const signUpWithEmail = async (email: string, password: string): Promise<{ error?: string }> => {
+    const normEmail = email.toLowerCase().trim();
+
+    // 1. Check for Admin credentials
+    if (normEmail === ADMIN_EMAIL.toLowerCase().trim()) {
+      if (password === ADMIN_PASSWORD) {
+        if (isSupabaseConfigured && supabase) {
+          try {
+            await supabase.auth.signUp({ email: normEmail, password });
+          } catch {}
+        }
+        const adminUser: AuthUser = {
+          id: "admin-arnavraut",
+          email: ADMIN_EMAIL,
+          user_metadata: { full_name: "Arnav Raut (Admin)" },
+        };
+        setUser(adminUser);
+        localStorage.setItem("logpose_session_user", JSON.stringify(adminUser));
+        setIsAuthModalOpen(false);
+        const seenKey = `logpose_tour_seen_${ADMIN_EMAIL.toLowerCase().trim()}`;
+        if (!localStorage.getItem(seenKey)) {
+          localStorage.setItem(seenKey, "true");
+          setShouldLaunchTour(true);
+        }
+        return {};
+      } else {
+        return { error: "Invalid password for administrator account." };
+      }
     }
 
-    const { error } = await supabase.auth.signUp({ email, password });
-    if (error) return { error: error.message };
-    setIsAuthModalOpen(false);
-    return {};
+    // 2. Standard user sign up
+    if (isSupabaseConfigured && supabase) {
+      const { data, error } = await supabase.auth.signUp({ email: normEmail, password });
+      if (error) return { error: error.message };
+      if (data?.user) {
+        setUser({
+          id: data.user.id,
+          email: data.user.email || normEmail,
+          user_metadata: data.user.user_metadata,
+        });
+      }
+      setIsAuthModalOpen(false);
+      const seenKey = `logpose_tour_seen_${normEmail}`;
+      if (!localStorage.getItem(seenKey)) {
+        localStorage.setItem(seenKey, "true");
+        setShouldLaunchTour(true);
+      }
+      return {};
+    } else {
+      const standardUser: AuthUser = {
+        id: `user-${Date.now()}`,
+        email: normEmail,
+        user_metadata: { full_name: normEmail.split("@")[0] },
+      };
+      setUser(standardUser);
+      localStorage.setItem("logpose_session_user", JSON.stringify(standardUser));
+      setIsAuthModalOpen(false);
+      const seenKey = `logpose_tour_seen_${normEmail}`;
+      if (!localStorage.getItem(seenKey)) {
+        localStorage.setItem(seenKey, "true");
+        setShouldLaunchTour(true);
+      }
+      return {};
+    }
   };
 
-  const signInWithOAuth = async (provider: "google" | "github") => {
+  const signInWithOAuth = async (provider: "google" | "github"): Promise<{ error?: string }> => {
     if (!isSupabaseConfigured || !supabase) {
-      alert(`Supabase credentials not configured in .env. Use 1-Click Demo Profile below to test!`);
-      return { error: "Supabase credentials missing." };
+      return { error: "Supabase OAuth credentials not configured on backend yet." };
     }
 
     const { error } = await supabase.auth.signInWithOAuth({
@@ -148,22 +229,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     if (isSupabaseConfigured && supabase) {
-      await supabase.auth.signOut();
+      try {
+        await supabase.auth.signOut();
+      } catch {}
     }
     setUser(null);
-    localStorage.removeItem("logpose_mock_user");
-  };
-
-  const loginAsDemoAdmin = () => {
-    setUser(DEMO_ADMIN_USER);
-    localStorage.setItem("logpose_mock_user", JSON.stringify(DEMO_ADMIN_USER));
-    setIsAuthModalOpen(false);
-  };
-
-  const loginAsDemoUser = () => {
-    setUser(DEMO_STANDARD_USER);
-    localStorage.setItem("logpose_mock_user", JSON.stringify(DEMO_STANDARD_USER));
-    setIsAuthModalOpen(false);
+    localStorage.removeItem("logpose_session_user");
   };
 
   return (
@@ -179,8 +250,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signUpWithEmail,
         signInWithOAuth,
         signOut,
-        loginAsDemoAdmin,
-        loginAsDemoUser,
+        shouldLaunchTour,
+        resetTourLaunch: () => setShouldLaunchTour(false),
       }}
     >
       {children}

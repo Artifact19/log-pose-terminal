@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import { X, Lock, Mail, Shield, User, Sparkles, CheckCircle2 } from "lucide-react";
+import { X, Lock, Mail } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import { ADMIN_EMAIL, isSupabaseConfigured } from "../lib/supabase";
 
 export const AuthModal: React.FC = () => {
   const {
@@ -10,8 +9,6 @@ export const AuthModal: React.FC = () => {
     signInWithEmail,
     signUpWithEmail,
     signInWithOAuth,
-    loginAsDemoAdmin,
-    loginAsDemoUser,
   } = useAuth();
 
   const [mode, setMode] = useState<"signin" | "signup">("signin");
@@ -55,13 +52,13 @@ export const AuthModal: React.FC = () => {
       <div className="relative z-10 max-w-md w-full bg-[#FAF6F0] rounded-3xl border-2 border-beige-300 shadow-tactile-card p-6 sm:p-7 animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
         <div className="flex items-center justify-between pb-3.5 mb-4 border-b border-beige-200">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-beige-200 flex items-center justify-center border border-beige-300">
               <Lock className="w-4 h-4 text-terracotta-500" />
             </div>
             <div>
               <h3 className="text-base font-bold text-ink-primary font-mono tracking-tight">
-                {mode === "signin" ? "Sign In to Terminal" : "Create Trader Profile"}
+                {mode === "signin" ? "Sign In to Terminal" : "Create Account"}
               </h3>
               <p className="text-[11px] text-ink-muted">Access custom watchlists and model operations</p>
             </div>
@@ -78,6 +75,7 @@ export const AuthModal: React.FC = () => {
         {/* Tab switch */}
         <div className="flex items-center bg-beige-200/70 p-1 rounded-2xl border border-beige-300 shadow-tactile-well mb-4 text-xs font-mono font-medium">
           <button
+            type="button"
             onClick={() => {
               setMode("signin");
               setErrorMsg("");
@@ -91,6 +89,7 @@ export const AuthModal: React.FC = () => {
             Sign In
           </button>
           <button
+            type="button"
             onClick={() => {
               setMode("signup");
               setErrorMsg("");
@@ -159,7 +158,7 @@ export const AuthModal: React.FC = () => {
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-3 mb-5">
+        <form onSubmit={handleSubmit} className="space-y-3">
           <div>
             <label className="block text-xs font-mono font-medium text-ink-secondary mb-1">
               Email Address
@@ -197,52 +196,11 @@ export const AuthModal: React.FC = () => {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="console-glow-button w-full py-2.5 rounded-xl text-xs font-mono font-bold text-white tracking-wider cursor-pointer mt-1"
+            className="console-glow-button w-full py-2.5 rounded-xl text-xs font-mono font-bold text-white tracking-wider cursor-pointer mt-2"
           >
             {isSubmitting ? "Authenticating..." : mode === "signin" ? "Sign In" : "Create Account"}
           </button>
         </form>
-
-        {/* 1-Click Fast Profile Switcher */}
-        <div className="pt-3.5 border-t border-beige-200">
-          <div className="flex items-center gap-1.5 mb-2.5 text-[11px] font-mono text-ink-secondary">
-            <Sparkles className="w-3.5 h-3.5 text-terracotta-500" />
-            <span className="font-bold">Instant Demo Profiles (1-Click):</span>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 text-xs font-mono">
-            <button
-              type="button"
-              onClick={loginAsDemoAdmin}
-              className="p-2.5 rounded-xl border border-terracotta-300 bg-terracotta-50/60 hover:bg-terracotta-100 text-left transition-colors cursor-pointer group"
-            >
-              <div className="flex items-center gap-1.5 font-bold text-terracotta-800 text-[11px]">
-                <Shield className="w-3.5 h-3.5 text-terracotta-600" />
-                Admin Profile
-              </div>
-              <div className="text-[10px] text-terracotta-600/80 truncate mt-0.5">
-                {ADMIN_EMAIL}
-              </div>
-            </button>
-
-            <button
-              type="button"
-              onClick={loginAsDemoUser}
-              className="p-2.5 rounded-xl border border-beige-300 bg-beige-100/70 hover:bg-beige-200/70 text-left transition-colors cursor-pointer"
-            >
-              <div className="flex items-center gap-1.5 font-bold text-ink-primary text-[11px]">
-                <User className="w-3.5 h-3.5 text-ink-muted" />
-                Trader Profile
-              </div>
-              <div className="text-[10px] text-ink-muted truncate mt-0.5">
-                Standard Member
-              </div>
-            </button>
-          </div>
-          <p className="text-[10px] text-ink-muted mt-2 text-center">
-            The Admin profile unlocks model recalibration & operational controls.
-          </p>
-        </div>
       </div>
     </div>
   );

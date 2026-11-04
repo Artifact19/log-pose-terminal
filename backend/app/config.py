@@ -19,6 +19,7 @@ class Settings:
         self.CORS_ORIGINS: str = os.getenv("CORS_ORIGINS", "http://localhost:5173")
         self.ENV: str = os.getenv("ENV", "dev")
         self.ADMIN_EMAIL: str = os.getenv("ADMIN_EMAIL", "arnavraut4567@gmail.com")
+        self.ADMIN_PASSWORD: str = os.getenv("ADMIN_PASSWORD", "28logpose19")
         self.SUPABASE_JWT_SECRET: str = os.getenv("SUPABASE_JWT_SECRET", "")
         self.DISCLAIMER: str = (
             "Log Pose Terminal is for research and forward-testing "
