@@ -128,102 +128,168 @@ export const FeatureTour: React.FC<FeatureTourProps> = ({ isOpen, onClose }) => 
     }
   };
 
+  // Dynamic positioning so the dialog card never covers the spotlighted element
+  let cardStyle: React.CSSProperties = {
+    position: "fixed",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    maxWidth: 440,
+    width: "calc(100% - 32px)",
+  };
+
+  if (targetRect) {
+    const spaceBelow = window.innerHeight - targetRect.bottom;
+    const spaceAbove = targetRect.top;
+    const cardWidth = 440;
+    const idealLeft = Math.max(
+      16,
+      Math.min(window.innerWidth - cardWidth - 16, targetRect.left + targetRect.width / 2 - cardWidth / 2)
+    );
+
+    if (spaceBelow >= 240) {
+      cardStyle = {
+        position: "fixed",
+        top: Math.min(window.innerHeight - 250, targetRect.bottom + 16),
+        left: idealLeft,
+        maxWidth: cardWidth,
+        width: "calc(100% - 32px)",
+      };
+    } else if (spaceAbove >= 240) {
+      cardStyle = {
+        position: "fixed",
+        top: Math.max(16, targetRect.top - 230),
+        left: idealLeft,
+        maxWidth: cardWidth,
+        width: "calc(100% - 32px)",
+      };
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-50 overflow-hidden pointer-events-auto">
-      {/* Dark overlay backdrop */}
-      <div
-        className="absolute inset-0 bg-black/45 backdrop-blur-[2px] transition-opacity duration-300"
+      {/* SVG Mask: Dims everything EXCEPT the target element (Zero blur or dim on the selected element!) */}
+      <svg
+        className="fixed inset-0 w-full h-full pointer-events-auto z-0 cursor-pointer"
         onClick={onClose}
-      />
+      >
+        <defs>
+          <mask id="tour-spotlight-mask">
+            {/* White background reveals the darkened overlay */}
+            <rect x="0" y="0" width="100%" height="100%" fill="white" />
+            {/* Black cutout creates a 100% crystal-clear, unblurred transparent window over the target */}
+            {targetRect && (
+              <rect
+                x={targetRect.left - 8}
+                y={targetRect.top - 8}
+                width={targetRect.width + 16}
+                height={targetRect.height + 16}
+                rx="16"
+                ry="16"
+                fill="black"
+              />
+            )}
+          </mask>
+        </defs>
+        <rect
+          x="0"
+          y="0"
+          width="100%"
+          height="100%"
+          fill="rgba(24, 18, 14, 0.58)"
+          mask="url(#tour-spotlight-mask)"
+        />
+      </svg>
 
-      {/* Spotlight highlight cut-out around target element */}
+      {/* Crisp glowing bezel around the crystal-clear unblurred target element */}
       {targetRect && (
         <div
-          className="absolute border-2 border-terracotta-400 rounded-2xl pointer-events-none transition-all duration-300 shadow-[0_0_0_9999px_rgba(0,0,0,0.45)] ring-4 ring-terracotta-300/40"
+          className="fixed border-2 border-terracotta-500 rounded-2xl pointer-events-none transition-all duration-300 ring-4 ring-terracotta-400/40 shadow-[0_0_24px_rgba(200,90,50,0.4)] z-10"
           style={{
-            top: targetRect.top - 6,
-            left: targetRect.left - 6,
-            width: targetRect.width + 12,
-            height: targetRect.height + 12,
+            top: targetRect.top - 8,
+            left: targetRect.left - 8,
+            width: targetRect.width + 16,
+            height: targetRect.height + 16,
           }}
         />
       )}
 
-      {/* Floating Tour Card */}
-      <div className="fixed inset-0 flex items-center justify-center p-4 pointer-events-none">
-        <div className="pointer-events-auto max-w-md w-full bg-[#FAF6F0] rounded-3xl border-2 border-beige-300 shadow-tactile-card p-6 animate-in fade-in zoom-in-95 duration-200">
-          {/* Card Top: Step counter & close button */}
-          <div className="flex items-center justify-between mb-3.5 pb-2 border-b border-beige-200">
-            <div className="flex items-center gap-2">
-              <span className="flex items-center gap-1 text-[11px] font-mono font-bold text-terracotta-700 bg-beige-200/90 px-2.5 py-0.5 rounded-full border border-beige-300 shadow-2xs">
-                <Sparkles className="w-3 h-3 text-terracotta-500" />
-                Step {currentStepIdx + 1} of {TOUR_STEPS.length}
-              </span>
-            </div>
-            <button
-              onClick={onClose}
-              className="p-1 rounded-xl text-ink-muted hover:text-ink-primary hover:bg-beige-200/60 transition-colors cursor-pointer"
-              title="Close tour"
-            >
-              <X className="w-4 h-4" />
-            </button>
+      {/* Floating Tour Card (Positioned so it doesn't obstruct the spotlight) */}
+      <div
+        style={cardStyle}
+        className="z-20 bg-[#FAF6F0] rounded-3xl border-2 border-beige-300 shadow-tactile-card p-6 animate-in fade-in zoom-in-95 duration-200 pointer-events-auto"
+      >
+        {/* Card Top: Step counter & close button */}
+        <div className="flex items-center justify-between mb-3.5 pb-2 border-b border-beige-200">
+          <div className="flex items-center gap-2">
+            <span className="flex items-center gap-1 text-[11px] font-mono font-bold text-terracotta-700 bg-beige-200/90 px-2.5 py-0.5 rounded-full border border-beige-300 shadow-2xs">
+              <Sparkles className="w-3 h-3 text-terracotta-500" />
+              Step {currentStepIdx + 1} of {TOUR_STEPS.length}
+            </span>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1 rounded-xl text-ink-muted hover:text-ink-primary hover:bg-beige-200/60 transition-colors cursor-pointer"
+            title="Close tour"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Title */}
+        <h4 className="text-base font-bold text-ink-primary font-mono tracking-tight mb-2">
+          {currentStep.title}
+        </h4>
+
+        {/* One Simple Sentence */}
+        <p className="text-sm text-ink-secondary leading-relaxed font-sans mb-6">
+          {currentStep.sentence}
+        </p>
+
+        {/* Progress dots & Navigation buttons */}
+        <div className="flex items-center justify-between pt-2 border-t border-beige-200">
+          <div className="flex items-center gap-1.5">
+            {TOUR_STEPS.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setCurrentStepIdx(idx)}
+                className={`h-1.5 rounded-full transition-all cursor-pointer ${
+                  idx === currentStepIdx
+                    ? "w-5 bg-terracotta-500"
+                    : "w-1.5 bg-beige-300 hover:bg-beige-400"
+                }`}
+                aria-label={`Jump to step ${idx + 1}`}
+              />
+            ))}
           </div>
 
-          {/* Title */}
-          <h4 className="text-base font-bold text-ink-primary font-mono tracking-tight mb-2">
-            {currentStep.title}
-          </h4>
-
-          {/* One Simple Sentence */}
-          <p className="text-sm text-ink-secondary leading-relaxed font-sans mb-6">
-            {currentStep.sentence}
-          </p>
-
-          {/* Progress dots & Navigation buttons */}
-          <div className="flex items-center justify-between pt-2 border-t border-beige-200">
-            <div className="flex items-center gap-1.5">
-              {TOUR_STEPS.map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setCurrentStepIdx(idx)}
-                  className={`h-1.5 rounded-full transition-all cursor-pointer ${
-                    idx === currentStepIdx
-                      ? "w-5 bg-terracotta-500"
-                      : "w-1.5 bg-beige-300 hover:bg-beige-400"
-                  }`}
-                  aria-label={`Jump to step ${idx + 1}`}
-                />
-              ))}
-            </div>
-
-            <div className="flex items-center gap-2">
-              {currentStepIdx > 0 && (
-                <button
-                  onClick={handlePrev}
-                  className="tactile-pill flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-mono font-semibold text-ink-secondary hover:text-ink-primary cursor-pointer"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                  Back
-                </button>
-              )}
-
+          <div className="flex items-center gap-2">
+            {currentStepIdx > 0 && (
               <button
-                onClick={handleNext}
-                className="console-glow-button flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-mono font-bold text-white cursor-pointer shadow-xs"
+                onClick={handlePrev}
+                className="tactile-pill flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-mono font-semibold text-ink-secondary hover:text-ink-primary cursor-pointer"
               >
-                {currentStepIdx === TOUR_STEPS.length - 1 ? (
-                  <>
-                    <span>Finish</span>
-                    <Check className="w-3.5 h-3.5" />
-                  </>
-                ) : (
-                  <>
-                    <span>Next</span>
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </>
-                )}
+                <ChevronLeft className="w-3.5 h-3.5" />
+                Back
               </button>
-            </div>
+            )}
+
+            <button
+              onClick={handleNext}
+              className="console-glow-button flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-mono font-bold text-white cursor-pointer shadow-xs"
+            >
+              {currentStepIdx === TOUR_STEPS.length - 1 ? (
+                <>
+                  <span>Finish</span>
+                  <Check className="w-3.5 h-3.5" />
+                </>
+              ) : (
+                <>
+                  <span>Next</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </>
+              )}
+            </button>
           </div>
         </div>
       </div>
