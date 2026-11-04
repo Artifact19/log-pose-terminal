@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { X, ChevronRight, ChevronLeft, Sparkles, Check, RefreshCw } from "lucide-react";
+import { X, ChevronRight, ChevronLeft, Sparkles, Check, RefreshCw, Lock } from "lucide-react";
 
 export interface TourStep {
   target: string; // matches data-tour attribute
@@ -64,13 +64,15 @@ interface FeatureTourProps {
   onClose: () => void;
   onRunForecast?: () => void;
   isForecastLoading?: boolean;
+  hasForecast: boolean;
 }
 
 export const FeatureTour: React.FC<FeatureTourProps> = ({
   isOpen,
   onClose,
   onRunForecast,
-  isForecastLoading,
+  isForecastLoading = false,
+  hasForecast,
 }) => {
   const [currentStepIdx, setCurrentStepIdx] = useState(0);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
@@ -103,19 +105,16 @@ export const FeatureTour: React.FC<FeatureTourProps> = ({
     }
   }, [isOpen, currentStepIdx, updateTargetPosition]);
 
-  // When on step 2 (Generate Forecast button), listen for clicks on the actual button in the DOM
+  // AUTO-ADVANCE ONLY WHEN FORECAST IS TRULY GENERATED:
+  // When at Step 3 (index 2) and the forecast finishes generating successfully, advance to Step 4
   useEffect(() => {
-    if (isOpen && currentStepIdx === 2) {
-      const btn = document.querySelector('[data-tour="run-forecast"]');
-      const handleBtnClick = () => {
-        setTimeout(() => {
-          setCurrentStepIdx(3);
-        }, 350);
-      };
-      btn?.addEventListener("click", handleBtnClick);
-      return () => btn?.removeEventListener("click", handleBtnClick);
+    if (isOpen && currentStepIdx === 2 && hasForecast && !isForecastLoading) {
+      const timer = setTimeout(() => {
+        setCurrentStepIdx(3);
+      }, 500);
+      return () => clearTimeout(timer);
     }
-  }, [isOpen, currentStepIdx]);
+  }, [isOpen, currentStepIdx, hasForecast, isForecastLoading]);
 
   // Keyboard controls
   useEffect(() => {
@@ -131,11 +130,18 @@ export const FeatureTour: React.FC<FeatureTourProps> = ({
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, currentStepIdx]);
+  }, [isOpen, currentStepIdx, hasForecast, isForecastLoading]);
 
   if (!isOpen) return null;
 
   const handleNext = () => {
+    // HARD LOCK: Cannot advance past Step 3 (index 2) unless forecast is generated!
+    if (currentStepIdx === 2 && !hasForecast) {
+      if (onRunForecast && !isForecastLoading) {
+        onRunForecast();
+      }
+      return;
+    }
     if (currentStepIdx < TOUR_STEPS.length - 1) {
       setCurrentStepIdx(currentStepIdx + 1);
     } else {
@@ -189,7 +195,7 @@ export const FeatureTour: React.FC<FeatureTourProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden pointer-events-auto">
-      {/* SVG Mask: Dims everything EXCEPT the target element (Zero blur or dim on the selected element!) */}
+      {/* SVG Mask: Dims everything EXCEPT the target element (Zero blur on selected element) */}
       <svg
         className="fixed inset-0 w-full h-full pointer-events-auto z-0 cursor-pointer"
         onClick={onClose}
@@ -198,7 +204,7 @@ export const FeatureTour: React.FC<FeatureTourProps> = ({
           <mask id="tour-spotlight-mask">
             {/* White background reveals the darkened overlay */}
             <rect x="0" y="0" width="100%" height="100%" fill="white" />
-            {/* Black cutout creates a 100% crystal-clear, unblurred transparent window over the target */}
+            {/* Black cutout creates a 100% transparent window over the target */}
             {targetRect && (
               <rect
                 x={targetRect.left - 8}
@@ -235,7 +241,7 @@ export const FeatureTour: React.FC<FeatureTourProps> = ({
         />
       )}
 
-      {/* Floating Tour Card (Positioned so it doesn't obstruct the spotlight) */}
+      {/* Floating Tour Card */}
       <div
         style={cardStyle}
         className="z-20 bg-[#FAF6F0] rounded-3xl border-2 border-beige-300 shadow-tactile-card p-6 animate-in fade-in zoom-in-95 duration-200 pointer-events-auto"
@@ -262,40 +268,51 @@ export const FeatureTour: React.FC<FeatureTourProps> = ({
           {currentStep.title}
         </h4>
 
-        {/* Dynamic Content: If Step 2, prompt user to generate forecast first */}
+        {/* Dynamic Content */}
         {currentStepIdx === 2 ? (
           <div className="space-y-3 mb-5">
             <p className="text-sm text-ink-secondary leading-relaxed font-sans">
               Runs our machine learning models to project expected prices and calibrated uncertainty bands.
             </p>
-            <div className="p-3.5 bg-beige-200/60 rounded-2xl border border-beige-300 shadow-tactile-well">
-              <p className="text-xs font-mono font-semibold text-ink-primary mb-2.5">
-                Generate a forecast first to bring all charts, reliability gauges, and projections to life:
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  if (onRunForecast) {
-                    onRunForecast();
-                  }
-                  setCurrentStepIdx(3);
-                }}
-                disabled={isForecastLoading}
-                className="console-glow-button w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-mono font-bold text-white shadow-clay-pill cursor-pointer"
-              >
-                {isForecastLoading ? (
-                  <>
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    <span>Calculating Multi-Horizon Bounds...</span>
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span>Generate Forecast & Continue &rarr;</span>
-                  </>
-                )}
-              </button>
-            </div>
+            
+            {hasForecast ? (
+              <div className="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-200 text-emerald-800 text-xs font-mono flex items-center gap-2">
+                <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>Forecast generated successfully! Advancing to interactive chart...</span>
+              </div>
+            ) : (
+              <div className="p-3.5 bg-beige-200/70 rounded-2xl border border-beige-300 shadow-tactile-well">
+                <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-terracotta-800 mb-1.5">
+                  <Lock className="w-3.5 h-3.5 text-terracotta-600 shrink-0" />
+                  <span>Forecast Required to Unlock Next Steps</span>
+                </div>
+                <p className="text-xs text-ink-secondary mb-3 leading-relaxed">
+                  The chart, confidence score, and price table require a live forecast to display. Click below to run the models now:
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (onRunForecast && !isForecastLoading) {
+                      onRunForecast();
+                    }
+                  }}
+                  disabled={isForecastLoading}
+                  className="console-glow-button w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-mono font-bold text-white shadow-clay-pill cursor-pointer"
+                >
+                  {isForecastLoading ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>Computing Multi-Horizon Forecast...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Generate Forecast & Unlock Tour &rarr;</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
           </div>
         ) : (
           <p className="text-sm text-ink-secondary leading-relaxed font-sans mb-6">
@@ -306,18 +323,28 @@ export const FeatureTour: React.FC<FeatureTourProps> = ({
         {/* Progress dots & Navigation buttons */}
         <div className="flex items-center justify-between pt-2 border-t border-beige-200">
           <div className="flex items-center gap-1.5">
-            {TOUR_STEPS.map((_, idx) => (
-              <button
-                key={idx}
-                onClick={() => setCurrentStepIdx(idx)}
-                className={`h-1.5 rounded-full transition-all cursor-pointer ${
-                  idx === currentStepIdx
-                    ? "w-5 bg-terracotta-500"
-                    : "w-1.5 bg-beige-300 hover:bg-beige-400"
-                }`}
-                aria-label={`Jump to step ${idx + 1}`}
-              />
-            ))}
+            {TOUR_STEPS.map((_, idx) => {
+              const isLocked = idx > 2 && !hasForecast;
+              return (
+                <button
+                  key={idx}
+                  disabled={isLocked}
+                  onClick={() => {
+                    if (isLocked) return;
+                    setCurrentStepIdx(idx);
+                  }}
+                  className={`h-1.5 rounded-full transition-all ${
+                    isLocked
+                      ? "w-1.5 bg-beige-300/40 cursor-not-allowed"
+                      : idx === currentStepIdx
+                      ? "w-5 bg-terracotta-500 cursor-pointer"
+                      : "w-1.5 bg-beige-300 hover:bg-beige-400 cursor-pointer"
+                  }`}
+                  aria-label={`Jump to step ${idx + 1}`}
+                  title={isLocked ? "Generate forecast first to unlock" : `Step ${idx + 1}`}
+                />
+              );
+            })}
           </div>
 
           <div className="flex items-center gap-2">
@@ -331,22 +358,47 @@ export const FeatureTour: React.FC<FeatureTourProps> = ({
               </button>
             )}
 
-            <button
-              onClick={handleNext}
-              className="console-glow-button flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-mono font-bold text-white cursor-pointer shadow-xs"
-            >
-              {currentStepIdx === TOUR_STEPS.length - 1 ? (
-                <>
-                  <span>Done</span>
-                  <Check className="w-3.5 h-3.5" />
-                </>
-              ) : (
-                <>
-                  <span>Next</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </>
-              )}
-            </button>
+            {currentStepIdx === 2 && !hasForecast ? (
+              <button
+                type="button"
+                onClick={() => {
+                  if (onRunForecast && !isForecastLoading) {
+                    onRunForecast();
+                  }
+                }}
+                disabled={isForecastLoading}
+                className="console-glow-button flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold text-white cursor-pointer shadow-xs"
+              >
+                {isForecastLoading ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Generating...</span>
+                  </>
+                ) : (
+                  <>
+                    <Lock className="w-3.5 h-3.5" />
+                    <span>Generate First</span>
+                  </>
+                )}
+              </button>
+            ) : (
+              <button
+                onClick={handleNext}
+                className="console-glow-button flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-mono font-bold text-white cursor-pointer shadow-xs"
+              >
+                {currentStepIdx === TOUR_STEPS.length - 1 ? (
+                  <>
+                    <span>Done</span>
+                    <Check className="w-3.5 h-3.5" />
+                  </>
+                ) : (
+                  <>
+                    <span>Next</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </>
+                )}
+              </button>
+            )}
           </div>
         </div>
       </div>

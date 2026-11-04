@@ -31,6 +31,7 @@ function TerminalApp() {
   const [ghostCount, setGhostCount] = useState(10);
   const [selectedRun, setSelectedRun] = useState<ForecastRunDetail | null>(null);
   const [isTourOpen, setIsTourOpen] = useState(false);
+  const [forecastGeneratedInSession, setForecastGeneratedInSession] = useState(false);
   const { shouldLaunchTour, resetTourLaunch } = useAuth();
 
   // Show tour ONLY when someone signs up for the first time
@@ -100,6 +101,7 @@ function TerminalApp() {
     mutationFn: () => api.createForecast(currentTicker, horizon, undefined, true),
     onSuccess: (newRun) => {
       setSelectedRun(newRun);
+      setForecastGeneratedInSession(true);
       qc.invalidateQueries({ queryKey: ["ledger"] });
       qc.invalidateQueries({ queryKey: ["ghosts"] });
       qc.invalidateQueries({ queryKey: ["ledgerStats"] });
@@ -274,6 +276,7 @@ function TerminalApp() {
         onClose={handleCloseTour}
         onRunForecast={() => forecastMutation.mutate()}
         isForecastLoading={forecastMutation.isPending}
+        hasForecast={forecastGeneratedInSession}
       />
 
       {/* Supabase Authentication & Profile Modal */}
