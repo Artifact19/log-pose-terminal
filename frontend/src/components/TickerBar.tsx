@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Search, Play, RefreshCw, Calendar, Clock } from "lucide-react";
+import { getMarketInfo } from "../lib/fmt";
 
 interface TickerBarProps {
   currentTicker: string;
@@ -74,18 +75,25 @@ export const TickerBar: React.FC<TickerBarProps> = ({
         {/* Controls: Horizon + Freshness + Run Button */}
         <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-end">
           {/* Data freshness pill */}
-          {lastBarDate && (
-            <div
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono border shadow-2xs ${
-                isStale
-                  ? "bg-amber-50 text-amber-800 border-amber-200"
-                  : "bg-beige-200/60 text-ink-secondary border-beige-300 shadow-tactile-well"
-              }`}
-            >
-              <Clock className="w-3.5 h-3.5 text-ink-muted" />
-              <span>Market Date: {lastBarDate}</span>
-            </div>
-          )}
+          {lastBarDate && (() => {
+            const mkt = getMarketInfo(currentTicker);
+            return (
+              <div
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono border shadow-2xs ${
+                  isStale
+                    ? "bg-amber-50 text-amber-800 border-amber-200"
+                    : "bg-beige-200/60 text-ink-secondary border-beige-300 shadow-tactile-well"
+                }`}
+                title={`Last daily market close recorded on ${mkt.exchangeName} (${mkt.timezone})`}
+              >
+                <Clock className="w-3.5 h-3.5 text-ink-muted" />
+                <span>Last Close: {lastBarDate}</span>
+                <span className="text-[10px] px-1 py-0.2 rounded-sm bg-beige-300/60 text-ink-primary font-bold">
+                  {mkt.exchangeCode}
+                </span>
+              </div>
+            );
+          })()}
 
           {/* Horizon Selector (Tactile Tray with Inset Shadows) */}
           <div className="flex items-center gap-1 bg-beige-200/60 p-1 rounded-2xl border border-beige-300 shadow-tactile-well">

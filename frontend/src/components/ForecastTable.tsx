@@ -1,5 +1,5 @@
 import React from "react";
-import { fmtDate, fmtPct, fmtPrice } from "../lib/fmt";
+import { fmtDate, fmtPct, fmtPrice, getMarketInfo } from "../lib/fmt";
 import type { ForecastPointDetail } from "../types";
 
 interface ForecastTableProps {
@@ -8,6 +8,8 @@ interface ForecastTableProps {
 }
 
 export const ForecastTable: React.FC<ForecastTableProps> = ({ points, ticker }) => {
+  const mkt = getMarketInfo(ticker);
+
   return (
     <div className="bg-beige-50 rounded-3xl border border-beige-300 p-5 sm:p-6 shadow-tactile-card mt-6">
       <div className="flex items-center justify-between mb-4 pb-3 border-b border-beige-200">
@@ -16,11 +18,11 @@ export const ForecastTable: React.FC<ForecastTableProps> = ({ points, ticker }) 
             Price Projections by Timeframe
           </h3>
           <p className="text-xs text-ink-muted mt-0.5">
-            Statistical forecasts and expected ranges for upcoming trading sessions.
+            Statistical forecasts and expected ranges for upcoming {mkt.exchangeName} ({mkt.timezone}) sessions.
           </p>
         </div>
-        <span className="text-xs text-ink-muted font-mono px-3 py-1 rounded-xl bg-beige-200/60 border border-beige-300 shadow-2xs">
-          {points.length} Sessions Ahead
+        <span className="text-xs text-ink-secondary font-mono px-3 py-1 rounded-xl bg-beige-200/60 border border-beige-300 shadow-2xs">
+          {points.length} Sessions Ahead &middot; {mkt.exchangeCode}
         </span>
       </div>
 
