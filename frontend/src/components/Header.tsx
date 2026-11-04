@@ -40,7 +40,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, health,
                   v2.0
                 </span>
               </div>
-              <p className="hidden xl:block text-[11px] text-ink-muted whitespace-nowrap">AI Stock Navigation & Performance Verification</p>
+              <p className="hidden xl:block text-[11px] text-ink-muted whitespace-nowrap">Stock Forecasting Terminal</p>
             </div>
           </div>
 

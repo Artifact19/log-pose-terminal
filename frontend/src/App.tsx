@@ -12,6 +12,7 @@ import { ModelOpsPanel } from "./components/ModelOpsPanel";
 import { FeatureTour } from "./components/FeatureTour";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { AuthModal } from "./components/AuthModal";
+import { Analytics } from "@vercel/analytics/react";
 import type { ForecastRunDetail } from "./types";
 
 const queryClient = new QueryClient({
@@ -286,6 +287,7 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TerminalApp />
+        <Analytics />
       </AuthProvider>
     </QueryClientProvider>
   );
