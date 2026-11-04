@@ -163,41 +163,41 @@ export const MasterChart: React.FC<MasterChartProps> = ({
   });
 
   return (
-    <div className="bg-clay-card rounded-2xl border border-clay-border p-5 shadow-clay-card">
+    <div className="bg-beige-50 rounded-3xl border border-beige-300 p-5 shadow-tactile-card">
       {/* Top Chart Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b border-sand-200">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b border-beige-200">
         <div className="flex items-center gap-2">
-          <span className="text-base font-bold text-ink-primary font-mono tracking-tight">
+          <span className="text-base font-bold text-ink-primary font-sans tracking-tight">
             {run.ticker} Price & Forecast Trajectory
           </span>
-          <span className="text-xs px-2 py-0.5 rounded-md bg-sand-100 font-mono text-ink-secondary border border-sand-200">
+          <span className="text-xs px-2.5 py-0.5 rounded-lg bg-beige-200/70 font-mono text-ink-secondary border border-beige-300 shadow-2xs">
             Baseline Price: ${run.anchor_close_price.toFixed(2)}
           </span>
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Chart mode toggle */}
-          <div className="flex items-center bg-sand-100 p-0.5 rounded-xl border border-sand-200 text-xs">
+          {/* Chart mode toggle (Sunken Tactile Well) */}
+          <div className="flex items-center bg-beige-200/70 p-1 rounded-2xl border border-beige-300 shadow-tactile-well text-xs">
             <button
               onClick={() => setChartType("candlestick")}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-xl font-medium transition-all cursor-pointer ${
                 chartType === "candlestick"
-                  ? "bg-white text-ink-primary shadow-xs"
+                  ? "bg-white text-ink-primary shadow-tactile-btn border-t border-white border-b border-beige-300"
                   : "text-ink-secondary hover:text-ink-primary"
               }`}
             >
-              <BarChart2 className="w-3.5 h-3.5" />
+              <BarChart2 className="w-3.5 h-3.5 text-terracotta-500" />
               Candles
             </button>
             <button
               onClick={() => setChartType("line")}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-xl font-medium transition-all cursor-pointer ${
                 chartType === "line"
-                  ? "bg-white text-ink-primary shadow-xs"
+                  ? "bg-white text-ink-primary shadow-tactile-btn border-t border-white border-b border-beige-300"
                   : "text-ink-secondary hover:text-ink-primary"
               }`}
             >
-              <LineChart className="w-3.5 h-3.5" />
+              <LineChart className="w-3.5 h-3.5 text-terracotta-500" />
               Line
             </button>
           </div>
@@ -205,10 +205,10 @@ export const MasterChart: React.FC<MasterChartProps> = ({
           {/* Past Forecasts toggle */}
           <button
             onClick={() => setShowGhosts(!showGhosts)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono font-medium border transition-all cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-mono font-medium transition-all cursor-pointer ${
               showGhosts
-                ? "bg-terracotta-50 text-terracotta-700 border-terracotta-200"
-                : "bg-sand-100 text-ink-secondary border-sand-200 hover:text-ink-primary"
+                ? "bg-gradient-to-r from-terracotta-500 to-terracotta-600 text-white shadow-clay-pill border-t border-white/30"
+                : "tactile-pill text-ink-secondary hover:text-ink-primary"
             }`}
             title="Toggle previous historical forecasts to inspect accuracy over time"
           >
@@ -219,25 +219,25 @@ export const MasterChart: React.FC<MasterChartProps> = ({
       </div>
 
       {/* Plotly Chart Canvas */}
-      <div className="w-full h-[450px]">
+      <div className="w-full h-[450px] rounded-2xl overflow-hidden bg-[#FAF7F2] border border-beige-200/70 shadow-tactile-well p-1">
         <Plot
           data={traces}
           layout={{
             autosize: true,
             margin: { l: 20, r: 50, t: 15, b: 35 },
-            plot_bgcolor: "#FCFAF7",
-            paper_bgcolor: "#FFFFFF",
-            font: { family: "JetBrains Mono, Inter, sans-serif", color: "#6E655D", size: 11 },
+            plot_bgcolor: "#FAF7F2",
+            paper_bgcolor: "#FAF7F2",
+            font: { family: "Outfit, Plus Jakarta Sans, sans-serif", color: "#675B53", size: 11 },
             xaxis: {
-              gridcolor: "#EFE6D9",
-              linecolor: "#E0D4C5",
+              gridcolor: "#EBE2D6",
+              linecolor: "#D8CCBF",
               showline: true,
               rangeslider: { visible: false },
               type: "date",
             },
             yaxis: {
-              gridcolor: "#EFE6D9",
-              linecolor: "#E0D4C5",
+              gridcolor: "#EBE2D6",
+              linecolor: "#D8CCBF",
               showline: true,
               side: "right",
               tickprefix: "$",

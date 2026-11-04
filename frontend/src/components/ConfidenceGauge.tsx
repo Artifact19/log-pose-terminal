@@ -37,17 +37,17 @@ export const ConfidenceGauge: React.FC<ConfidenceGaugeProps> = ({ score, regime 
 
   return (
     <div className="flex flex-col items-center justify-center py-2">
-      <div className="relative w-44 h-24 flex items-center justify-center">
+      <div className="relative w-48 h-26 flex items-center justify-center">
         <svg viewBox="0 0 160 90" className="w-full h-full overflow-visible">
-          {/* Background Track */}
+          {/* Background Track (Recessed Groove) */}
           <path
             d="M 10 80 A 70 70 0 0 1 150 80"
             fill="none"
-            stroke="#EFE6D9"
+            stroke="#E5DCD0"
             strokeWidth={strokeWidth}
             strokeLinecap="round"
           />
-          {/* Value Arc */}
+          {/* Value Arc (Illuminated Meter) */}
           <path
             d="M 10 80 A 70 70 0 0 1 150 80"
             fill="none"
@@ -60,20 +60,20 @@ export const ConfidenceGauge: React.FC<ConfidenceGaugeProps> = ({ score, regime 
           />
         </svg>
 
-        {/* Center score readout */}
-        <div className="absolute bottom-0 text-center">
-          <div className="text-3xl font-bold font-mono tracking-tight text-ink-primary">
+        {/* Center score readout (Tactile Circular Bezel) */}
+        <div className="absolute bottom-0 text-center bg-beige-50 px-4 py-1 rounded-2xl border border-beige-300/80 shadow-tactile-knob">
+          <div className="text-3xl font-extrabold font-mono tracking-tight text-ink-primary">
             {score.toFixed(1)}
           </div>
-          <div className="text-[10px] font-semibold uppercase tracking-wider text-ink-muted">
-            Confidence / 100
+          <div className="text-[10px] font-bold uppercase tracking-wider text-ink-muted">
+            Score / 100
           </div>
         </div>
       </div>
 
       {/* Regime badge */}
-      <div className="mt-2">
-        <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-mono font-semibold border ${bgTint}`}>
+      <div className="mt-3">
+        <span className={`px-3 py-1 rounded-full text-[11px] font-mono font-semibold border shadow-2xs ${bgTint}`}>
           {regimeLabel}
         </span>
       </div>

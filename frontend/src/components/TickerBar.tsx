@@ -37,35 +37,35 @@ export const TickerBar: React.FC<TickerBarProps> = ({
   };
 
   return (
-    <div className="bg-clay-card rounded-2xl border border-clay-border p-4 shadow-clay-card mb-6">
+    <div className="bg-beige-50 rounded-3xl border border-beige-300 p-4 sm:p-5 shadow-tactile-card mb-6">
       <div className="flex flex-col lg:flex-row items-center justify-between gap-4">
         {/* Ticker chips & search */}
         <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
-          <span className="text-xs font-semibold text-ink-muted uppercase tracking-wider mr-1">
+          <span className="text-xs font-bold text-ink-muted uppercase tracking-wider mr-1">
             Presets:
           </span>
           {PRESET_TICKERS.map((t) => (
             <button
               key={t}
               onClick={() => onSelectTicker(t)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-mono font-medium transition-all ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-mono font-medium transition-all cursor-pointer ${
                 currentTicker === t
-                  ? "bg-terracotta-500 text-white shadow-clay-pill scale-102"
-                  : "bg-sand-100 text-ink-primary hover:bg-sand-200 border border-sand-200"
+                  ? "bg-gradient-to-r from-terracotta-600 to-terracotta-500 text-white shadow-clay-pill border-t border-white/40 scale-102"
+                  : "tactile-pill text-ink-primary hover:text-terracotta-600"
               }`}
             >
               {t}
             </button>
           ))}
 
-          {/* Search box */}
+          {/* Search box (Sunken Well) */}
           <form onSubmit={handleSubmit} className="flex items-center relative ml-2">
             <input
               type="text"
               value={inputVal}
               onChange={(e) => setInputVal(e.target.value.toUpperCase())}
-              placeholder="Search ticker..."
-              className="pl-8 pr-3 py-1.5 rounded-xl text-xs font-mono border border-sand-200 bg-sand-50 focus:bg-white focus:outline-hidden focus:border-terracotta-400 w-36 transition-colors"
+              placeholder="Search symbol..."
+              className="pl-8 pr-3 py-1.5 rounded-xl text-xs font-mono border border-beige-300 bg-beige-200/60 shadow-tactile-well focus:bg-white focus:outline-hidden focus:border-terracotta-400 w-36 transition-all text-ink-primary"
             />
             <Search className="w-3.5 h-3.5 text-ink-muted absolute left-2.5 pointer-events-none" />
           </form>
@@ -76,10 +76,10 @@ export const TickerBar: React.FC<TickerBarProps> = ({
           {/* Data freshness pill */}
           {lastBarDate && (
             <div
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono border ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono border shadow-2xs ${
                 isStale
                   ? "bg-amber-50 text-amber-800 border-amber-200"
-                  : "bg-sand-100 text-ink-secondary border-sand-200"
+                  : "bg-beige-200/60 text-ink-secondary border-beige-300 shadow-tactile-well"
               }`}
             >
               <Clock className="w-3.5 h-3.5 text-ink-muted" />
@@ -87,17 +87,17 @@ export const TickerBar: React.FC<TickerBarProps> = ({
             </div>
           )}
 
-          {/* Horizon Selector */}
-          <div className="flex items-center gap-1 bg-sand-100 p-1 rounded-xl border border-sand-200">
+          {/* Horizon Selector (Tactile Tray with Inset Shadows) */}
+          <div className="flex items-center gap-1 bg-beige-200/60 p-1 rounded-2xl border border-beige-300 shadow-tactile-well">
             <Calendar className="w-3.5 h-3.5 text-ink-muted ml-1.5 mr-0.5" />
             {PRESET_HORIZONS.map((h) => (
               <button
                 key={h}
                 onClick={() => onSelectHorizon(h)}
-                className={`px-2 py-1 rounded-lg text-xs font-mono font-medium transition-colors ${
+                className={`px-2.5 py-1 rounded-xl text-xs font-mono font-medium transition-all cursor-pointer ${
                   horizon === h
-                    ? "bg-clay-card text-terracotta-600 shadow-xs"
-                    : "text-ink-secondary hover:text-ink-primary"
+                    ? "bg-white text-terracotta-600 shadow-tactile-btn border-t border-white border-b-2 border-beige-300"
+                    : "text-ink-secondary hover:text-ink-primary hover:bg-beige-100/60"
                 }`}
               >
                 {h}D
@@ -105,15 +105,15 @@ export const TickerBar: React.FC<TickerBarProps> = ({
             ))}
           </div>
 
-          {/* Action button */}
+          {/* Glowing Luminous Console Action Button */}
           <button
             onClick={onRunForecast}
             disabled={isLoading}
-            className="flex items-center gap-2 px-5 py-2 rounded-xl bg-terracotta-500 hover:bg-terracotta-600 active:scale-98 disabled:opacity-60 text-white font-medium text-xs font-mono transition-all shadow-clay-pill cursor-pointer"
+            className="console-glow-button flex items-center gap-2 px-6 py-2.5 rounded-2xl text-white font-sans font-bold text-xs tracking-wide cursor-pointer disabled:opacity-60"
           >
             {isLoading ? (
               <>
-                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                <RefreshCw className="w-4 h-4 animate-spin" />
                 <span>Generating Forecast...</span>
               </>
             ) : (
@@ -128,4 +128,3 @@ export const TickerBar: React.FC<TickerBarProps> = ({
     </div>
   );
 };
-

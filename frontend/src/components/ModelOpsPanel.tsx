@@ -27,13 +27,13 @@ export const ModelOpsPanel: React.FC<ModelOpsPanelProps> = ({
   return (
     <div className="space-y-6">
       {/* 1. Active Model Overview Card */}
-      <div className="bg-clay-card rounded-2xl border border-clay-border p-6 shadow-clay-card">
-        <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-sand-200 mb-5 gap-4">
+      <div className="bg-clay-card rounded-3xl border border-clay-border p-6 shadow-tactile-card">
+        <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-beige-300 mb-5 gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-lg font-bold text-ink-primary font-mono">{ticker} Forecasting Model</span>
+              <span className="text-lg font-bold text-ink-primary font-mono tracking-tight">{ticker} Forecasting Model</span>
               {activeModel && (
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-xs">
                   ACTIVE & CALIBRATED
                 </span>
               )}
@@ -50,7 +50,7 @@ export const ModelOpsPanel: React.FC<ModelOpsPanelProps> = ({
                 type="checkbox"
                 checked={forceRetrain}
                 onChange={(e) => setForceRetrain(e.target.checked)}
-                className="rounded-sm border-sand-300 text-terracotta-500 focus:ring-terracotta-400"
+                className="rounded-sm border-beige-300 text-terracotta-500 focus:ring-terracotta-400"
               />
               Force Full Recalibration
             </label>
@@ -58,7 +58,7 @@ export const ModelOpsPanel: React.FC<ModelOpsPanelProps> = ({
             <button
               onClick={() => onTriggerRetrain(forceRetrain)}
               disabled={isRetraining}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-terracotta-500 hover:bg-terracotta-600 disabled:opacity-60 text-white font-mono text-xs font-semibold shadow-clay-pill transition-all cursor-pointer"
+              className="console-glow-button flex items-center gap-2 px-5 py-2.5 rounded-2xl disabled:opacity-60 text-white font-mono text-xs font-semibold cursor-pointer"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isRetraining ? "animate-spin" : ""}`} />
               {isRetraining ? "Recalibrating Model..." : "Update Model with Latest Market Data"}
@@ -68,9 +68,9 @@ export const ModelOpsPanel: React.FC<ModelOpsPanelProps> = ({
 
         {/* Retrain Stepper Stage (When active) */}
         {isRetraining && (
-          <div className="p-4 rounded-xl bg-sand-100 border border-sand-200 mb-5 animate-pulse">
+          <div className="p-4 rounded-2xl bg-beige-100 border border-beige-300 mb-5 animate-pulse">
             <div className="flex items-center gap-2 text-xs font-mono font-semibold text-terracotta-700 mb-1">
-              <RefreshCw className="w-4 h-4 animate-spin" />
+              <RefreshCw className="w-4 h-4 animate-spin text-terracotta-500" />
               <span>Current Pipeline Step: {retrainStage || "PROCESSING"}</span>
             </div>
             <p className="text-[11px] text-ink-secondary">
@@ -81,16 +81,16 @@ export const ModelOpsPanel: React.FC<ModelOpsPanelProps> = ({
 
         {/* Retrain Comparison (After Retrain) */}
         {retrainDiff && (
-          <div className="p-5 rounded-2xl bg-sand-50 border border-sand-200 mb-6">
-            <div className="flex items-center justify-between mb-3 pb-2 border-b border-sand-200">
+          <div className="p-5 rounded-2xl bg-beige-100/60 border border-beige-300 mb-6 shadow-inner">
+            <div className="flex items-center justify-between mb-3 pb-2 border-b border-beige-300">
               <span className="text-xs font-bold font-mono text-ink-primary">
                 Model Evaluation & Upgrade Result
               </span>
               <span
                 className={`text-xs font-mono font-bold px-2.5 py-0.5 rounded-full border ${
                   retrainDiff.activated
-                    ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-                    : "bg-amber-50 text-amber-800 border-amber-200"
+                    ? "bg-emerald-50 text-emerald-800 border-emerald-200 shadow-xs"
+                    : "bg-amber-50 text-amber-800 border-amber-200 shadow-xs"
                 }`}
               >
                 {retrainDiff.activated ? "NEW VERSION ACTIVATED" : "CURRENT MODEL RETAINED"}
@@ -103,7 +103,7 @@ export const ModelOpsPanel: React.FC<ModelOpsPanelProps> = ({
 
             {retrainDiff.old && retrainDiff.new && (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs font-mono">
-                <div className="bg-white p-3 rounded-xl border border-sand-200">
+                <div className="bg-[#FAF6F0] p-3 rounded-xl border border-beige-200 shadow-xs">
                   <div className="text-[10px] text-ink-muted uppercase">Historical Error (MAE)</div>
                   <div className="font-bold text-ink-primary mt-1">
                     {retrainDiff.new.walk_forward_mae.toFixed(2)}%
@@ -113,7 +113,7 @@ export const ModelOpsPanel: React.FC<ModelOpsPanelProps> = ({
                   </div>
                 </div>
 
-                <div className="bg-white p-3 rounded-xl border border-sand-200">
+                <div className="bg-[#FAF6F0] p-3 rounded-xl border border-beige-200 shadow-xs">
                   <div className="text-[10px] text-ink-muted uppercase">Trend Accuracy</div>
                   <div className="font-bold text-ink-primary mt-1">
                     {(retrainDiff.new.directional_accuracy * 100).toFixed(1)}%
@@ -123,7 +123,7 @@ export const ModelOpsPanel: React.FC<ModelOpsPanelProps> = ({
                   </div>
                 </div>
 
-                <div className="bg-white p-3 rounded-xl border border-sand-200">
+                <div className="bg-[#FAF6F0] p-3 rounded-xl border border-beige-200 shadow-xs">
                   <div className="text-[10px] text-ink-muted uppercase">Inside 80% Range</div>
                   <div className="font-bold text-ink-primary mt-1">
                     {(retrainDiff.new.empirical_coverage_80 * 100).toFixed(1)}%
@@ -133,7 +133,7 @@ export const ModelOpsPanel: React.FC<ModelOpsPanelProps> = ({
                   </div>
                 </div>
 
-                <div className="bg-white p-3 rounded-xl border border-sand-200">
+                <div className="bg-[#FAF6F0] p-3 rounded-xl border border-beige-200 shadow-xs">
                   <div className="text-[10px] text-ink-muted uppercase">Version Identifier</div>
                   <div className="font-bold text-terracotta-600 mt-1 truncate">
                     {retrainDiff.new_version_tag}
@@ -152,28 +152,28 @@ export const ModelOpsPanel: React.FC<ModelOpsPanelProps> = ({
               Backtested Performance Metrics (Historical Simulation):
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 font-mono text-xs">
-              <div className="bg-sand-50 p-3 rounded-xl border border-sand-200" title="Average percentage error across backtested historical forecasts">
+              <div className="bg-beige-100/60 p-3 rounded-xl border border-beige-200 shadow-xs" title="Average percentage error across backtested historical forecasts">
                 <span className="text-[10px] text-ink-muted uppercase tracking-wider block">Average Error (MAE)</span>
                 <span className="text-base font-bold text-ink-primary mt-0.5 block">
                   {activeModel.walk_forward_mae.toFixed(2)}%
                 </span>
               </div>
 
-              <div className="bg-sand-50 p-3 rounded-xl border border-sand-200" title="Percentage of times the model correctly anticipated whether the stock moved up or down">
+              <div className="bg-beige-100/60 p-3 rounded-xl border border-beige-200 shadow-xs" title="Percentage of times the model correctly anticipated whether the stock moved up or down">
                 <span className="text-[10px] text-ink-muted uppercase tracking-wider block">Trend Accuracy</span>
                 <span className="text-base font-bold text-ink-primary mt-0.5 block">
                   {(activeModel.directional_accuracy * 100).toFixed(1)}%
                 </span>
               </div>
 
-              <div className="bg-sand-50 p-3 rounded-xl border border-sand-200" title="Percentage of past prices that landed inside the 80% prediction range">
+              <div className="bg-beige-100/60 p-3 rounded-xl border border-beige-200 shadow-xs" title="Percentage of past prices that landed inside the 80% prediction range">
                 <span className="text-[10px] text-ink-muted uppercase tracking-wider block">80% Range Accuracy</span>
                 <span className="text-base font-bold text-emerald-700 mt-0.5 block">
                   {(activeModel.empirical_coverage_80 * 100).toFixed(1)}%
                 </span>
               </div>
 
-              <div className="bg-sand-50 p-3 rounded-xl border border-sand-200" title="Percentage of past prices that landed inside the 95% prediction range">
+              <div className="bg-beige-100/60 p-3 rounded-xl border border-beige-200 shadow-xs" title="Percentage of past prices that landed inside the 95% prediction range">
                 <span className="text-[10px] text-ink-muted uppercase tracking-wider block">95% Range Accuracy</span>
                 <span className="text-base font-bold text-emerald-700 mt-0.5 block">
                   {activeModel.empirical_coverage_95
@@ -182,14 +182,14 @@ export const ModelOpsPanel: React.FC<ModelOpsPanelProps> = ({
                 </span>
               </div>
 
-              <div className="bg-sand-50 p-3 rounded-xl border border-sand-200" title="Width of the predicted price band relative to normal historical market volatility">
+              <div className="bg-beige-100/60 p-3 rounded-xl border border-beige-200 shadow-xs" title="Width of the predicted price band relative to normal historical market volatility">
                 <span className="text-[10px] text-ink-muted uppercase tracking-wider block">Band Tightness</span>
                 <span className="text-base font-bold text-ink-primary mt-0.5 block">
                   {activeModel.mpiw_80_atr ? `${activeModel.mpiw_80_atr.toFixed(2)}x` : "—"}
                 </span>
               </div>
 
-              <div className="bg-sand-50 p-3 rounded-xl border border-sand-200" title="Most recent market session included in model training">
+              <div className="bg-beige-100/60 p-3 rounded-xl border border-beige-200 shadow-xs" title="Most recent market session included in model training">
                 <span className="text-[10px] text-ink-muted uppercase tracking-wider block">Trained Through</span>
                 <span className="text-base font-bold text-ink-primary mt-0.5 block">
                   {activeModel.train_end_date}
@@ -205,18 +205,18 @@ export const ModelOpsPanel: React.FC<ModelOpsPanelProps> = ({
       </div>
 
       {/* 2. Model History Log */}
-      <div className="bg-clay-card rounded-2xl border border-clay-border p-6 shadow-clay-card">
-        <div className="flex items-center gap-2 mb-4 pb-2 border-b border-sand-200">
+      <div className="bg-clay-card rounded-3xl border border-clay-border p-6 shadow-tactile-card">
+        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-beige-300">
           <GitBranch className="w-4 h-4 text-terracotta-500" />
           <h3 className="text-sm font-bold text-ink-primary font-mono tracking-tight">
             Historical Model Versions ({allModels.length})
           </h3>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto rounded-2xl bg-beige-100/40 border border-beige-200/90 shadow-inner p-1">
           <table className="w-full text-left border-collapse text-xs font-mono">
             <thead>
-              <tr className="border-b border-sand-200 text-[10px] text-ink-muted uppercase tracking-wider">
+              <tr className="border-b border-beige-300 text-[10px] text-ink-muted uppercase tracking-wider">
                 <th className="py-2.5 px-3">Version</th>
                 <th className="py-2.5 px-3">Trained On</th>
                 <th className="py-2.5 px-3">Training Window</th>
@@ -226,9 +226,9 @@ export const ModelOpsPanel: React.FC<ModelOpsPanelProps> = ({
                 <th className="py-2.5 px-3">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-sand-100">
+            <tbody className="divide-y divide-beige-200">
               {allModels.map((m) => (
-                <tr key={m.id} className="hover:bg-sand-50/70 transition-colors">
+                <tr key={m.id} className="hover:bg-beige-50/90 transition-colors">
                   <td className="py-3 px-3 font-semibold text-ink-primary">{m.version_tag}</td>
                   <td className="py-3 px-3 text-ink-secondary">{m.trained_at ? fmtDate(m.trained_at) : m.train_end_date}</td>
                   <td className="py-3 px-3 text-ink-secondary">{m.train_start_date} – {m.train_end_date}</td>
@@ -237,11 +237,11 @@ export const ModelOpsPanel: React.FC<ModelOpsPanelProps> = ({
                   <td className="py-3 px-3 text-emerald-700 font-medium">{(m.empirical_coverage_80 * 100).toFixed(1)}%</td>
                   <td className="py-3 px-3">
                     {m.is_active ? (
-                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-xs">
                         ACTIVE
                       </span>
                     ) : (
-                      <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-sand-100 text-ink-muted border border-sand-200">
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-beige-200 text-ink-muted border border-beige-300">
                         ARCHIVED
                       </span>
                     )}

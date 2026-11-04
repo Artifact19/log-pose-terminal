@@ -13,27 +13,27 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, health 
 
   return (
     <>
-      <header className="bg-clay-card border-b border-clay-border px-6 py-3 shadow-clay-sm sticky top-0 z-30">
+      <header className="bg-beige-50/95 backdrop-blur-md border-b border-beige-300 px-6 py-3.5 shadow-clay-sm sticky top-0 z-30 transition-colors">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           {/* Logo & Brand Identity */}
           <div className="flex items-center gap-3.5">
             <div className="relative group">
-              <div className="w-12 h-12 rounded-2xl overflow-hidden border-2 border-terracotta-200 shadow-clay-sm bg-sand-100 flex items-center justify-center transition-transform group-hover:scale-105">
+              <div className="w-12 h-12 rounded-2xl overflow-hidden border border-white/80 shadow-tactile-knob bg-beige-100 flex items-center justify-center transition-transform group-hover:scale-105">
                 <img
                   src="/cat-logo.jpg"
                   alt="Log Pose Logo"
                   className="w-full h-full object-cover"
                 />
               </div>
-              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-market-up rounded-full border-2 border-white shadow-xs" title="Terminal Live" />
+              <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-market-up rounded-full border-2 border-beige-50 shadow-xs" title="Terminal Live" />
             </div>
 
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xl font-bold tracking-tight text-ink-primary font-mono">
-                  Log Pose <span className="text-terracotta-500">Terminal</span>
+                <span className="text-xl font-bold tracking-tight text-ink-primary font-sans">
+                  Log Pose <span className="text-terracotta-500 font-extrabold">Terminal</span>
                 </span>
-                <span className="px-2 py-0.5 text-[10px] font-mono font-semibold uppercase tracking-wider rounded-md bg-sand-100 text-ink-secondary border border-sand-200">
+                <span className="px-2 py-0.5 text-[10px] font-mono font-semibold uppercase tracking-wider rounded-lg bg-beige-200/70 text-ink-secondary border border-beige-300/80 shadow-2xs">
                   Terminal v2.0
                 </span>
               </div>
@@ -41,14 +41,14 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, health 
             </div>
           </div>
 
-          {/* Navigation Switcher */}
-          <nav className="flex items-center bg-sand-100 p-1 rounded-2xl border border-clay-border">
+          {/* Navigation Switcher (Tactile Recessed Well with Extruded Buttons) */}
+          <nav className="flex items-center bg-beige-200/70 p-1.5 rounded-2xl border border-beige-300/90 shadow-tactile-well">
             <button
               onClick={() => setActiveTab("terminal")}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                 activeTab === "terminal"
-                  ? "bg-clay-card text-terracotta-600 shadow-clay-sm"
-                  : "text-ink-secondary hover:text-ink-primary"
+                  ? "bg-white text-terracotta-600 shadow-tactile-btn border-t border-white border-b-2 border-beige-300"
+                  : "text-ink-secondary hover:text-ink-primary hover:bg-beige-100/50"
               }`}
             >
               <TrendingUp className="w-4 h-4" />
@@ -59,8 +59,8 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, health 
               onClick={() => setActiveTab("ledger")}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                 activeTab === "ledger"
-                  ? "bg-clay-card text-terracotta-600 shadow-clay-sm"
-                  : "text-ink-secondary hover:text-ink-primary"
+                  ? "bg-white text-terracotta-600 shadow-tactile-btn border-t border-white border-b-2 border-beige-300"
+                  : "text-ink-secondary hover:text-ink-primary hover:bg-beige-100/50"
               }`}
             >
               <FileText className="w-4 h-4" />
@@ -71,8 +71,8 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, health 
               onClick={() => setActiveTab("models")}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                 activeTab === "models"
-                  ? "bg-clay-card text-terracotta-600 shadow-clay-sm"
-                  : "text-ink-secondary hover:text-ink-primary"
+                  ? "bg-white text-terracotta-600 shadow-tactile-btn border-t border-white border-b-2 border-beige-300"
+                  : "text-ink-secondary hover:text-ink-primary hover:bg-beige-100/50"
               }`}
             >
               <Cpu className="w-4 h-4" />
@@ -83,10 +83,10 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, health 
           {/* System Status & Disclaimer Link */}
           <div className="flex items-center gap-3">
             <div
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-mono font-medium border ${
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium border shadow-2xs ${
                 health?.ml_exports_in_sync
-                  ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-                  : "bg-amber-50 text-amber-800 border-amber-200"
+                  ? "bg-emerald-50 text-emerald-800 border-emerald-200/80"
+                  : "bg-amber-50 text-amber-800 border-amber-200/80"
               }`}
               title="Forecasting algorithms and feature pipelines are verified and synchronized."
             >
@@ -105,7 +105,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, health 
 
             <button
               onClick={() => setShowDisclaimer(true)}
-              className="p-2 text-ink-muted hover:text-ink-primary rounded-xl hover:bg-sand-100 transition-colors cursor-pointer"
+              className="p-2 text-ink-muted hover:text-ink-primary rounded-xl hover:bg-beige-200/60 transition-colors cursor-pointer border border-transparent hover:border-beige-300"
               title="Important Disclaimer"
             >
               <Info className="w-4 h-4" />
@@ -114,10 +114,10 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, health 
         </div>
       </header>
 
-      {/* Professional Financial Disclaimer Modal */}
+      {/* Financial Disclaimer Modal */}
       {showDisclaimer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
-          <div className="bg-clay-card rounded-3xl p-6 max-w-md w-full border border-clay-border shadow-clay-card animate-in fade-in zoom-in-95">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-xs p-4">
+          <div className="bg-beige-50 rounded-3xl p-6 max-w-md w-full border border-beige-300 shadow-tactile-card animate-in fade-in zoom-in-95">
             <div className="flex items-center gap-2 text-terracotta-600 mb-3">
               <Info className="w-5 h-5" />
               <h3 className="font-bold text-base text-ink-primary">Methodology & Regulatory Disclaimer</h3>
@@ -126,7 +126,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, health 
               Log Pose Terminal is an analytical system engineered strictly for quantitative research,
               model forward-testing, and auditable uncertainty measurement.
             </p>
-            <div className="bg-sand-50 p-3 rounded-xl border border-sand-200 text-[11px] text-ink-secondary font-mono mb-4">
+            <div className="bg-beige-100 p-3.5 rounded-xl border border-beige-300 text-[11px] text-ink-secondary font-mono mb-4 shadow-tactile-well">
               NOT FINANCIAL ADVICE. Statistical forecasts and probability ranges are mathematical estimates
               derived from past market patterns and are not guarantees of future stock performance.
             </div>

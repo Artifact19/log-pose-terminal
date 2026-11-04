@@ -4,24 +4,80 @@
 
 @layer base {
   body {
-    background-color: #F6F1EA;
-    color: #2A2521;
+    background-color: #F4EFEA;
+    color: #2C2420;
+    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
     font-feature-settings: "tnum" 1, "cv05" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
-/* Custom scrollbars for quant tables */
+/* Tactile hardware button and well utilities */
+.tactile-deck {
+  background: #FAF6F0;
+  border: 1px solid #E2D7CB;
+  box-shadow: 0 10px 28px -4px rgba(120, 95, 75, 0.12), 0 3px 8px -2px rgba(120, 95, 75, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+.tactile-well {
+  background: #EDE4D8;
+  border: 1px solid #DFD3C4;
+  box-shadow: inset 0 2px 5px rgba(120, 95, 75, 0.12), inset 0 1px 2px rgba(120, 95, 75, 0.08), 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.tactile-pill {
+  background: #FDFBF8;
+  border-top: 1px solid rgba(255, 255, 255, 0.95);
+  border-left: 1px solid #E6DCD0;
+  border-right: 1px solid #E6DCD0;
+  border-bottom: 2px solid #D2C4B4;
+  box-shadow: 0 4px 12px -2px rgba(120, 95, 75, 0.16), 0 1px 3px rgba(120, 95, 75, 0.1);
+  transition: all 0.15s ease-out;
+}
+
+.tactile-pill:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px -2px rgba(120, 95, 75, 0.2), 0 2px 4px rgba(120, 95, 75, 0.12);
+}
+
+.tactile-pill:active {
+  transform: translateY(1px);
+  border-bottom-width: 1px;
+  box-shadow: inset 0 2px 4px rgba(120, 95, 75, 0.2);
+}
+
+/* Luminous console gradient button (inspired by image's 'tun on' pill) */
+.console-glow-button {
+  background: linear-gradient(135deg, #8A4FFF 0%, #C85A32 50%, #FF7A59 100%);
+  border-top: 1px solid rgba(255, 255, 255, 0.45);
+  border-bottom: 2px solid rgba(120, 30, 20, 0.5);
+  box-shadow: 0 8px 24px -2px rgba(200, 90, 50, 0.45), 0 3px 8px rgba(138, 79, 255, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.console-glow-button:hover {
+  transform: translateY(-1px) scale(1.01);
+  box-shadow: 0 10px 28px -1px rgba(200, 90, 50, 0.52), 0 4px 12px rgba(138, 79, 255, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.console-glow-button:active {
+  transform: translateY(1px);
+  box-shadow: 0 4px 12px rgba(200, 90, 50, 0.35), inset 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* Warm beige scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #F5EFE6;
+  background: #EDE4D8;
 }
 ::-webkit-scrollbar-thumb {
-  background: #DECEB7;
-  border-radius: 4px;
+  background: #D4C6B7;
+  border-radius: 6px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #C8B49B;
+  background: #BFAEA0;
 }

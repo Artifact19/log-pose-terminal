@@ -183,11 +183,11 @@ function TerminalApp() {
                 <ForecastTable points={activeRun.points} ticker={activeRun.ticker} />
               </>
             ) : (
-              <div className="bg-clay-card rounded-2xl border border-clay-border p-12 text-center shadow-clay-card">
+              <div className="bg-clay-card rounded-3xl border border-clay-border p-12 text-center shadow-tactile-card">
                 <img
                   src="/cat-logo.jpg"
                   alt="Log Pose Logo"
-                  className="w-20 h-20 mx-auto rounded-3xl border-2 border-terracotta-200 shadow-clay-card mb-4 object-cover"
+                  className="w-20 h-20 mx-auto rounded-3xl border-2 border-beige-300 shadow-tactile-knob mb-4 object-cover"
                 />
                 <h3 className="text-base font-bold text-ink-primary font-mono mb-1">
                   Ready to Forecast {currentTicker}
@@ -199,7 +199,7 @@ function TerminalApp() {
                 <button
                   onClick={() => forecastMutation.mutate()}
                   disabled={forecastMutation.isPending}
-                  className="px-6 py-2.5 rounded-xl bg-terracotta-500 hover:bg-terracotta-600 text-white font-mono text-xs font-semibold shadow-clay-pill transition-all cursor-pointer"
+                  className="console-glow-button px-6 py-2.5 rounded-2xl text-white font-mono text-xs font-semibold cursor-pointer"
                 >
                   {forecastMutation.isPending ? "Generating..." : `Generate ${horizon}-Day Forecast`}
                 </button>
@@ -238,7 +238,7 @@ function TerminalApp() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-clay-card border-t border-clay-border py-4 px-6 mt-12 text-center text-[11px] text-ink-muted font-mono">
+      <footer className="bg-beige-50/90 border-t border-beige-300 py-5 px-6 mt-12 text-center text-[11px] text-ink-muted font-mono">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
           <span>Log Pose Terminal &middot; Verifiable Market Intelligence &middot; Strictly Causal Data Pipeline</span>
           <span>Log Pose Terminal is for research and forward-testing purposes only. Not financial advice.</span>
