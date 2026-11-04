@@ -24,7 +24,7 @@ const TOUR_STEPS: TourStep[] = [
   {
     target: "run-forecast",
     title: "Generate Forecast",
-    sentence: "Runs our machine learning models to project future prices and calibrated uncertainty bands.",
+    sentence: "Runs the machine learning models to project expected prices and statistical probability ranges.",
     placement: "bottom",
   },
   {
