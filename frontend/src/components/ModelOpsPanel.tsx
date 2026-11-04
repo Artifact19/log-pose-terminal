@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Cpu, RefreshCw, GitBranch } from "lucide-react";
+import { Cpu, RefreshCw, GitBranch, Lock } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 import { fmtDate } from "../lib/fmt";
 import type { ModelVersion } from "../types";
 
@@ -23,6 +24,7 @@ export const ModelOpsPanel: React.FC<ModelOpsPanelProps> = ({
   retrainDiff,
 }) => {
   const [forceRetrain, setForceRetrain] = useState(false);
+  const { isAdmin, openAuthModal } = useAuth();
 
   return (
     <div className="space-y-6">
@@ -44,24 +46,50 @@ export const ModelOpsPanel: React.FC<ModelOpsPanelProps> = ({
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3">
             <label className="flex items-center gap-2 text-xs font-mono text-ink-secondary cursor-pointer select-none">
               <input
                 type="checkbox"
                 checked={forceRetrain}
+                disabled={!isAdmin}
                 onChange={(e) => setForceRetrain(e.target.checked)}
-                className="rounded-sm border-beige-300 text-terracotta-500 focus:ring-terracotta-400"
+                className="rounded-sm border-beige-300 text-terracotta-500 focus:ring-terracotta-400 disabled:opacity-50"
               />
               Force Full Recalibration
             </label>
 
             <button
-              onClick={() => onTriggerRetrain(forceRetrain)}
+              onClick={() => {
+                if (!isAdmin) {
+                  openAuthModal();
+                } else {
+                  onTriggerRetrain(forceRetrain);
+                }
+              }}
               disabled={isRetraining}
-              className="console-glow-button flex items-center gap-2 px-5 py-2.5 rounded-2xl disabled:opacity-60 text-white font-mono text-xs font-semibold cursor-pointer"
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl font-mono text-xs font-semibold cursor-pointer transition-all ${
+                isAdmin
+                  ? "console-glow-button text-white disabled:opacity-60"
+                  : "tactile-pill text-ink-secondary hover:text-ink-primary"
+              }`}
+              title={isAdmin ? "Trigger model walk-forward training & calibration" : "Admin privileges required (arnavraut4567@gmail.com)"}
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isRetraining ? "animate-spin" : ""}`} />
-              {isRetraining ? "Recalibrating Model..." : "Update Model with Latest Market Data"}
+              {!isAdmin ? (
+                <>
+                  <Lock className="w-3.5 h-3.5 text-terracotta-500" />
+                  <span>Admin Login Required to Retrain</span>
+                </>
+              ) : isRetraining ? (
+                <>
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  <span>Recalibrating Model...</span>
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>Update Model with Latest Market Data</span>
+                </>
+              )}
             </button>
           </div>
         </div>

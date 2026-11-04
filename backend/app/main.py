@@ -1,7 +1,8 @@
 from contextlib import asynccontextmanager
 import asyncio
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from backend.app.api.auth import require_admin
 from backend.app.api.routes import forecast, health, ledger, market, models, retrain
 from backend.app.config import settings
 from backend.app.db import init_db
@@ -66,7 +67,7 @@ app.include_router(retrain.router, prefix="/api", tags=["Model Operations"])
 
 
 @app.post("/api/admin/sync-check", tags=["Admin"])
-def admin_sync_check():
+def admin_sync_check(_admin: dict = Depends(require_admin)):
     in_sync, msg = check_sync(ROOT)
     return {"in_sync": in_sync, "message": msg}
 

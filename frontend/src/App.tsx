@@ -10,6 +10,8 @@ import { LedgerTable } from "./components/LedgerTable";
 import { StatsStrip } from "./components/StatsStrip";
 import { ModelOpsPanel } from "./components/ModelOpsPanel";
 import { FeatureTour } from "./components/FeatureTour";
+import { AuthProvider } from "./context/AuthContext";
+import { AuthModal } from "./components/AuthModal";
 import type { ForecastRunDetail } from "./types";
 
 const queryClient = new QueryClient({
@@ -266,6 +268,9 @@ function TerminalApp() {
 
       {/* Guided Feature Tour */}
       <FeatureTour isOpen={isTourOpen} onClose={handleCloseTour} />
+
+      {/* Supabase Authentication & Profile Modal */}
+      <AuthModal />
     </div>
   );
 }
@@ -273,7 +278,9 @@ function TerminalApp() {
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TerminalApp />
+      <AuthProvider>
+        <TerminalApp />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

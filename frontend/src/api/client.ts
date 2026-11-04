@@ -7,15 +7,41 @@ import type {
   ModelVersion,
   RetrainStatus,
 } from "../types";
+import { supabase, isSupabaseConfigured } from "../lib/supabase";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api";
 
+async function getAuthHeader(): Promise<Record<string, string>> {
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        return { Authorization: `Bearer ${session.access_token}` };
+      }
+    } catch {}
+  }
+  const mock = localStorage.getItem("logpose_mock_user");
+  if (mock) {
+    try {
+      const u = JSON.parse(mock);
+      // Format a mock Bearer JWT header carrying email claim
+      const headerB64 = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" }));
+      const payloadB64 = btoa(JSON.stringify({ sub: u.id, email: u.email, role: "authenticated" }));
+      return { Authorization: `Bearer ${headerB64}.${payloadB64}.mocksignature` };
+    } catch {}
+  }
+  return {};
+}
+
 async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const url = `${API_BASE}${endpoint}`;
+  const authHeaders = await getAuthHeader();
+
   const res = await fetch(url, {
     ...options,
     headers: {
       "Content-Type": "application/json",
+      ...authHeaders,
       ...options?.headers,
     },
   });

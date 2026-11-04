@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { TrendingUp, FileText, Cpu, CheckCircle2, AlertTriangle, Info, HelpCircle } from "lucide-react";
+import { TrendingUp, FileText, Cpu, CheckCircle2, AlertTriangle, Info, HelpCircle, User, LogOut, Shield } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 import type { HealthResponse } from "../types";
 
 interface HeaderProps {
@@ -11,6 +12,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, health, onOpenTour }) => {
   const [showDisclaimer, setShowDisclaimer] = useState(false);
+  const { user, isAdmin, openAuthModal, signOut } = useAuth();
 
   return (
     <>
@@ -81,8 +83,9 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, health,
             </button>
           </nav>
 
-          {/* System Status & Disclaimer Link */}
+          {/* System Status, User Profile & Disclaimer */}
           <div className="flex items-center gap-3">
+            {/* Quick Tour Button */}
             {onOpenTour && (
               <button
                 onClick={onOpenTour}
@@ -94,6 +97,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, health,
               </button>
             )}
 
+            {/* AI Engine Status Badge */}
             <div
               className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium border shadow-2xs ${
                 health?.ml_exports_in_sync
@@ -114,6 +118,50 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, health,
                 </>
               )}
             </div>
+
+            {/* User Profile / Sign In Pill */}
+            {user ? (
+              <div className="flex items-center gap-2 bg-beige-200/80 pl-1.5 pr-2.5 py-1 rounded-full border border-beige-300 shadow-2xs font-mono text-xs">
+                <div
+                  className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-[10px] text-white ${
+                    isAdmin
+                      ? "bg-gradient-to-tr from-terracotta-600 to-terracotta-400"
+                      : "bg-ink-secondary"
+                  }`}
+                >
+                  {isAdmin ? <Shield className="w-3.5 h-3.5" /> : user.email.slice(0, 2).toUpperCase()}
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="font-semibold text-ink-primary max-w-[130px] truncate" title={user.email}>
+                    {user.email.split("@")[0]}
+                  </span>
+                  {isAdmin ? (
+                    <span className="px-1.5 py-0.2 rounded-sm bg-terracotta-500 text-white font-bold text-[9px] shadow-2xs">
+                      ADMIN
+                    </span>
+                  ) : (
+                    <span className="px-1.5 py-0.2 rounded-sm bg-beige-300 text-ink-secondary font-bold text-[9px]">
+                      USER
+                    </span>
+                  )}
+                </div>
+                <button
+                  onClick={signOut}
+                  className="p-1 text-ink-muted hover:text-terracotta-600 rounded-lg hover:bg-beige-300/50 transition-colors cursor-pointer ml-1"
+                  title="Sign Out"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={openAuthModal}
+                className="tactile-pill flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-mono font-medium text-ink-primary hover:text-terracotta-600 transition-all cursor-pointer shadow-2xs"
+              >
+                <User className="w-3.5 h-3.5 text-terracotta-500" />
+                <span>Sign In</span>
+              </button>
+            )}
 
             <button
               onClick={() => setShowDisclaimer(true)}
