@@ -12,6 +12,7 @@ class Settings:
         self.ARTIFACT_DIR: str = os.getenv("ARTIFACT_DIR", str(ROOT_DIR / "artifacts"))
         self.CACHE_DIR: str = os.getenv("CACHE_DIR", str(ROOT_DIR / "cache"))
         self.DEFAULT_HORIZON: int = int(os.getenv("DEFAULT_HORIZON", "5"))
+        self.MAX_HORIZON: int = int(os.getenv("MAX_HORIZON", "20"))
         self.DEFAULT_TRAIN_YEARS: int = int(os.getenv("DEFAULT_TRAIN_YEARS", "8"))
         self.RETRAIN_COVERAGE_FLOOR: float = float(os.getenv("RETRAIN_COVERAGE_FLOOR", "0.65"))
         self.RETRAIN_LOOKBACK_DAYS: int = int(os.getenv("RETRAIN_LOOKBACK_DAYS", "10"))

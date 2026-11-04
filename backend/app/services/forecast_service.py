@@ -4,6 +4,7 @@ import uuid
 from datetime import date, datetime, timedelta, timezone
 from typing import Optional
 
+import joblib
 import pandas as pd
 from sqlmodel import Session
 
@@ -37,8 +38,18 @@ class ForecastService:
         with Session(engine) as session:
             active_model = model_repo.get_active(session, t)
 
-        if active_model is None:
-            retrain_res = retrain_service.trigger_retrain(t, force=True, as_of=as_of, horizon=h)
+        need_train = active_model is None
+        if active_model is not None:
+            try:
+                b_meta = joblib.load(active_model.artifact_path)
+                if b_meta.get("horizon", 5) < h:
+                    need_train = True
+            except Exception:
+                need_train = True
+
+        if need_train:
+            train_horizon = max(getattr(settings, "MAX_HORIZON", 20), h)
+            retrain_res = retrain_service.trigger_retrain(t, force=True, as_of=as_of, horizon=train_horizon)
             with Session(engine) as session:
                 active_model = model_repo.get_active(session, t)
 
@@ -70,7 +81,7 @@ class ForecastService:
         trading_dates = project_trading_dates(t, anchor_date, h)
 
         # Predict via ML pipeline
-        bundle = predict(ohlcv, t, active_model.artifact_path, trading_dates)
+        bundle = predict(ohlcv, t, active_model.artifact_path, trading_dates, requested_horizon=h)
 
         # Backdate model leakage risk check
         metadata = bundle.confidence.breakdown.model_dump(mode="json")
@@ -84,7 +95,7 @@ class ForecastService:
             created_at=datetime.now(timezone.utc),
             anchor_date=anchor_date,
             anchor_close_price=bundle.anchor_close,
-            horizon_days=h,
+            horizon_days=bundle.horizon,
             confidence_score=bundle.confidence.confidence_score,
             regime_status=bundle.confidence.regime_status,
             confidence_metadata=metadata,

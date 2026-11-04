@@ -35,7 +35,7 @@ class RetrainService:
         horizon: Optional[int] = None,
     ) -> dict[str, Any]:
         t = ticker.upper()
-        h = horizon or settings.DEFAULT_HORIZON
+        h = horizon or getattr(settings, "MAX_HORIZON", 20)
         job_id = str(uuid.uuid4())
 
         with _jobs_lock:

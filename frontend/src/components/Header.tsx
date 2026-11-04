@@ -1,14 +1,15 @@
 import React, { useState } from "react";
-import { TrendingUp, FileText, Cpu, CheckCircle2, AlertTriangle, Info } from "lucide-react";
+import { TrendingUp, FileText, Cpu, CheckCircle2, AlertTriangle, Info, HelpCircle } from "lucide-react";
 import type { HealthResponse } from "../types";
 
 interface HeaderProps {
   activeTab: "terminal" | "ledger" | "models";
   setActiveTab: (tab: "terminal" | "ledger" | "models") => void;
   health?: HealthResponse;
+  onOpenTour?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, health }) => {
+export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, health, onOpenTour }) => {
   const [showDisclaimer, setShowDisclaimer] = useState(false);
 
   return (
@@ -42,7 +43,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, health 
           </div>
 
           {/* Navigation Switcher (Tactile Recessed Well with Extruded Buttons) */}
-          <nav className="flex items-center bg-beige-200/70 p-1.5 rounded-2xl border border-beige-300/90 shadow-tactile-well">
+          <nav data-tour="nav-tabs" className="flex items-center bg-beige-200/70 p-1.5 rounded-2xl border border-beige-300/90 shadow-tactile-well">
             <button
               onClick={() => setActiveTab("terminal")}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
@@ -82,6 +83,17 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, health 
 
           {/* System Status & Disclaimer Link */}
           <div className="flex items-center gap-3">
+            {onOpenTour && (
+              <button
+                onClick={onOpenTour}
+                className="tactile-pill flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-mono font-medium text-ink-primary hover:text-terracotta-600 transition-all cursor-pointer shadow-2xs"
+                title="Start Interactive Feature Tour"
+              >
+                <HelpCircle className="w-3.5 h-3.5 text-terracotta-500" />
+                <span>Quick Tour</span>
+              </button>
+            )}
+
             <div
               className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium border shadow-2xs ${
                 health?.ml_exports_in_sync

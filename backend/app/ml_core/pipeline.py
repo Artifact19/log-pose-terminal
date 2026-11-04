@@ -141,6 +141,7 @@ def predict(
     artifact_path: str,
     projected_trading_dates: list[date],
     live_ledger_picp: Optional[float] = None,
+    requested_horizon: Optional[int] = None,
 ) -> ForecastBundle:
     """Produce live multi-horizon forecasts with calibrated conformal cones and confidence."""
     m = load_methodology()
@@ -150,9 +151,10 @@ def predict(
     calibrator = bundle["calibrator"]
     feature_stats = bundle["feature_stats"]
     eval_summary: EvaluationSummary = bundle["evaluation_summary"]
-    horizon: int = bundle["horizon"]
+    bundle_horizon: int = bundle["horizon"]
+    horizon: int = min(requested_horizon, bundle_horizon) if requested_horizon else bundle_horizon
 
-    pipeline = m.features_mod.FeaturePipeline(horizon=horizon)
+    pipeline = m.features_mod.FeaturePipeline(horizon=bundle_horizon)
     frame = pipeline.build(ohlcv, with_targets=False)
 
     if len(frame.X) == 0:

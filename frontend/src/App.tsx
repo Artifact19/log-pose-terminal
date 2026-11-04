@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { QueryClient, QueryClientProvider, useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api/client";
 import { Header } from "./components/Header";
@@ -9,6 +9,7 @@ import { ForecastTable } from "./components/ForecastTable";
 import { LedgerTable } from "./components/LedgerTable";
 import { StatsStrip } from "./components/StatsStrip";
 import { ModelOpsPanel } from "./components/ModelOpsPanel";
+import { FeatureTour } from "./components/FeatureTour";
 import type { ForecastRunDetail } from "./types";
 
 const queryClient = new QueryClient({
@@ -26,6 +27,19 @@ function TerminalApp() {
   const [horizon, setHorizon] = useState(5);
   const [ghostCount, setGhostCount] = useState(10);
   const [selectedRun, setSelectedRun] = useState<ForecastRunDetail | null>(null);
+  const [isTourOpen, setIsTourOpen] = useState(false);
+
+  useEffect(() => {
+    const hasSeenTour = localStorage.getItem("logpose_tour_completed");
+    if (!hasSeenTour) {
+      setIsTourOpen(true);
+    }
+  }, []);
+
+  const handleCloseTour = () => {
+    localStorage.setItem("logpose_tour_completed", "true");
+    setIsTourOpen(false);
+  };
 
   const qc = useQueryClient();
 
@@ -131,7 +145,12 @@ function TerminalApp() {
   return (
     <div className="min-h-screen bg-clay-canvas flex flex-col font-sans selection:bg-terracotta-200">
       {/* Top Header */}
-      <Header activeTab={activeTab} setActiveTab={setActiveTab} health={health} />
+      <Header
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        health={health}
+        onOpenTour={() => setIsTourOpen(true)}
+      />
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 py-6">
@@ -244,6 +263,9 @@ function TerminalApp() {
           <span>Log Pose Terminal is for research and forward-testing purposes only. Not financial advice.</span>
         </div>
       </footer>
+
+      {/* Guided Feature Tour */}
+      <FeatureTour isOpen={isTourOpen} onClose={handleCloseTour} />
     </div>
   );
 }

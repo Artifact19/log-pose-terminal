@@ -163,7 +163,7 @@ export const MasterChart: React.FC<MasterChartProps> = ({
   });
 
   return (
-    <div className="bg-beige-50 rounded-3xl border border-beige-300 p-5 shadow-tactile-card">
+    <div data-tour="master-chart" className="bg-beige-50 rounded-3xl border border-beige-300 p-5 shadow-tactile-card">
       {/* Top Chart Controls */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b border-beige-200">
         <div className="flex items-center gap-2">

@@ -21,7 +21,7 @@ export const ConfidencePanel: React.FC<ConfidencePanelProps> = ({ run }) => {
   const isElevated = run.regime_status === "ELEVATED_VOL";
 
   return (
-    <div className="bg-beige-50 rounded-3xl border border-beige-300 p-6 shadow-tactile-card flex flex-col justify-between">
+    <div data-tour="reliability-gauge" className="bg-beige-50 rounded-3xl border border-beige-300 p-6 shadow-tactile-card flex flex-col justify-between">
       <div>
         <div className="flex items-center justify-between pb-3 border-b border-beige-200 mb-4">
           <h3 className="text-sm font-bold text-ink-primary font-sans tracking-tight">
@@ -148,7 +148,7 @@ export const ConfidencePanel: React.FC<ConfidencePanelProps> = ({ run }) => {
       {(() => {
         const mkt = getMarketInfo(run.ticker);
         return (
-          <div className="mt-5 pt-3 border-t border-beige-300 text-[11px] text-ink-muted font-mono space-y-2">
+          <div data-tour="market-anchor" className="mt-5 pt-3 border-t border-beige-300 text-[11px] text-ink-muted font-mono space-y-2">
             <div className="flex justify-between items-center">
               <span className="text-ink-secondary">Anchor Date (Last Close):</span>
               <span className="font-bold text-ink-primary">{run.anchor_date}</span>

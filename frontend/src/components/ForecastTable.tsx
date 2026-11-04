@@ -11,7 +11,7 @@ export const ForecastTable: React.FC<ForecastTableProps> = ({ points, ticker }) 
   const mkt = getMarketInfo(ticker);
 
   return (
-    <div className="bg-beige-50 rounded-3xl border border-beige-300 p-5 sm:p-6 shadow-tactile-card mt-6">
+    <div data-tour="forecast-table" className="bg-beige-50 rounded-3xl border border-beige-300 p-5 sm:p-6 shadow-tactile-card mt-6">
       <div className="flex items-center justify-between mb-4 pb-3 border-b border-beige-200">
         <div>
           <h3 className="text-sm font-bold text-ink-primary font-sans tracking-tight">

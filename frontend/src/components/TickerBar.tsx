@@ -41,7 +41,7 @@ export const TickerBar: React.FC<TickerBarProps> = ({
     <div className="bg-beige-50 rounded-3xl border border-beige-300 p-4 sm:p-5 shadow-tactile-card mb-6">
       <div className="flex flex-col lg:flex-row items-center justify-between gap-4">
         {/* Ticker chips & search */}
-        <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+        <div data-tour="ticker-bar" className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
           <span className="text-xs font-bold text-ink-muted uppercase tracking-wider mr-1">
             Presets:
           </span>
@@ -96,7 +96,7 @@ export const TickerBar: React.FC<TickerBarProps> = ({
           })()}
 
           {/* Horizon Selector (Tactile Tray with Inset Shadows) */}
-          <div className="flex items-center gap-1 bg-beige-200/60 p-1 rounded-2xl border border-beige-300 shadow-tactile-well">
+          <div data-tour="horizon-selector" className="flex items-center gap-1 bg-beige-200/60 p-1 rounded-2xl border border-beige-300 shadow-tactile-well">
             <Calendar className="w-3.5 h-3.5 text-ink-muted ml-1.5 mr-0.5" />
             {PRESET_HORIZONS.map((h) => (
               <button
@@ -115,6 +115,7 @@ export const TickerBar: React.FC<TickerBarProps> = ({
 
           {/* Glowing Luminous Console Action Button */}
           <button
+            data-tour="run-forecast"
             onClick={onRunForecast}
             disabled={isLoading}
             className="console-glow-button flex items-center gap-2 px-6 py-2.5 rounded-2xl text-white font-sans font-bold text-xs tracking-wide cursor-pointer disabled:opacity-60"
