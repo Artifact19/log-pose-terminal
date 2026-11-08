@@ -171,6 +171,8 @@ function TerminalApp() {
           onSelectHorizon={setHorizon}
           onRunForecast={() => forecastMutation.mutate()}
           isLoading={forecastMutation.isPending}
+          isError={forecastMutation.isError}
+          isSuccess={forecastMutation.isSuccess}
           lastBarDate={barsData?.last_bar_date}
           isStale={barsData?.is_stale}
         />
@@ -276,6 +278,8 @@ function TerminalApp() {
         onClose={handleCloseTour}
         onRunForecast={() => forecastMutation.mutate()}
         isForecastLoading={forecastMutation.isPending}
+        isForecastError={forecastMutation.isError}
+        isForecastSuccess={forecastMutation.isSuccess}
         hasForecast={forecastGeneratedInSession}
       />
 

@@ -10,6 +10,8 @@ interface TickerBarProps {
   onSelectHorizon: (h: number) => void;
   onRunForecast: () => void;
   isLoading: boolean;
+  isError?: boolean;
+  isSuccess?: boolean;
   lastBarDate?: string;
   isStale?: boolean;
 }
@@ -24,11 +26,13 @@ export const TickerBar: React.FC<TickerBarProps> = ({
   onSelectHorizon,
   onRunForecast,
   isLoading,
+  isError = false,
+  isSuccess = false,
   lastBarDate,
   isStale,
 }) => {
   const [inputVal, setInputVal] = useState("");
-  const { progress, stage } = useForecastProgress(isLoading);
+  const { progress, stage } = useForecastProgress(isLoading, isError, isSuccess);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

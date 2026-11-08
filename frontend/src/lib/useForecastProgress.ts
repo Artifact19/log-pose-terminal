@@ -1,65 +1,86 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export interface ForecastProgressState {
   progress: number;
   stage: string;
 }
 
-export function useForecastProgress(isLoading: boolean): ForecastProgressState {
+export function useForecastProgress(
+  isLoading: boolean,
+  isError: boolean = false,
+  isSuccess: boolean = false
+): ForecastProgressState {
   const [progress, setProgress] = useState(0);
   const [stage, setStage] = useState("");
+  const intervalRef = useRef<any>(null);
+  const timeoutRef = useRef<any>(null);
 
   useEffect(() => {
+    // If an error occurred or loading was cancelled, clear immediately
+    if (isError) {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      setProgress(0);
+      setStage("");
+      return;
+    }
+
+    // When loading finishes (or success)
     if (!isLoading) {
-      if (progress > 0) {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      if (isSuccess) {
         setProgress(100);
-        setStage("Finalizing projection trajectory...");
-        const timer = setTimeout(() => {
+        setStage("Forecast finalized successfully!");
+        timeoutRef.current = setTimeout(() => {
           setProgress(0);
           setStage("");
-        }, 500);
-        return () => clearTimeout(timer);
+        }, 600);
+      } else {
+        setProgress(0);
+        setStage("");
       }
       return;
     }
 
-    // Reset and initialize when loading begins
-    setProgress(8);
-    setStage("Syncing latest market settlement closes...");
+    // Loading started: reset and animate
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setProgress(10);
+    setStage("Syncing market data & daily closes...");
 
     const startTime = Date.now();
-    const interval = setInterval(() => {
+    intervalRef.current = setInterval(() => {
       const elapsed = Date.now() - startTime;
 
       if (elapsed < 400) {
-        // Phase 1: Data sync (8% - 25%)
-        const p = Math.min(25, Math.round(8 + (elapsed / 400) * 17));
+        const p = Math.min(25, Math.round(10 + (elapsed / 400) * 15));
         setProgress(p);
-        setStage("Syncing latest market settlement closes...");
-      } else if (elapsed < 900) {
-        // Phase 2: Feature Engineering (25% - 55%)
-        const p = Math.min(55, Math.round(25 + ((elapsed - 400) / 500) * 30));
+        setStage("Syncing market data & daily closes...");
+      } else if (elapsed < 1000) {
+        const p = Math.min(55, Math.round(25 + ((elapsed - 400) / 600) * 30));
         setProgress(p);
-        setStage("Computing temporal features & rolling regimes...");
-      } else if (elapsed < 1600) {
-        // Phase 3: XGBoost Multi-Horizon Models (55% - 80%)
-        const p = Math.min(80, Math.round(55 + ((elapsed - 900) / 700) * 25));
+        setStage("Extracting temporal features & momentum...");
+      } else if (elapsed < 2000) {
+        const p = Math.min(80, Math.round(55 + ((elapsed - 1000) / 1000) * 25));
         setProgress(p);
         setStage("Executing multi-horizon XGBoost models...");
-      } else if (elapsed < 2400) {
-        // Phase 4: Conformal Calibration (80% - 94%)
-        const p = Math.min(94, Math.round(80 + ((elapsed - 1600) / 800) * 14));
+      } else if (elapsed < 3200) {
+        const p = Math.min(94, Math.round(80 + ((elapsed - 2000) / 1200) * 14));
         setProgress(p);
         setStage("Calibrating 80% & 95% conformal bounds...");
       } else {
-        // Phase 5: Asymptotic creep to 97% until response resolves
-        setProgress((prev) => Math.min(97, prev + 1));
+        // Slow creep up to 98% while waiting for API
+        setProgress((prev) => (prev < 98 ? prev + 1 : 98));
         setStage("Finalizing projection trajectory...");
       }
-    }, 60);
+    }, 70);
 
-    return () => clearInterval(interval);
-  }, [isLoading]);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [isLoading, isError, isSuccess]);
 
   return { progress, stage };
 }

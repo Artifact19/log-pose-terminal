@@ -65,6 +65,8 @@ interface FeatureTourProps {
   onClose: () => void;
   onRunForecast?: () => void;
   isForecastLoading?: boolean;
+  isForecastError?: boolean;
+  isForecastSuccess?: boolean;
   hasForecast: boolean;
 }
 
@@ -73,11 +75,17 @@ export const FeatureTour: React.FC<FeatureTourProps> = ({
   onClose,
   onRunForecast,
   isForecastLoading = false,
+  isForecastError = false,
+  isForecastSuccess = false,
   hasForecast,
 }) => {
   const [currentStepIdx, setCurrentStepIdx] = useState(0);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
-  const { progress, stage } = useForecastProgress(Boolean(isForecastLoading));
+  const { progress, stage } = useForecastProgress(
+    Boolean(isForecastLoading),
+    Boolean(isForecastError),
+    Boolean(isForecastSuccess)
+  );
 
   const currentStep = TOUR_STEPS[currentStepIdx];
 
