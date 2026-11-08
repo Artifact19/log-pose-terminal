@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Search, Play, RefreshCw, Calendar, Clock } from "lucide-react";
 import { getMarketInfo } from "../lib/fmt";
+import { useForecastProgress } from "../lib/useForecastProgress";
 
 interface TickerBarProps {
   currentTicker: string;
@@ -27,6 +28,7 @@ export const TickerBar: React.FC<TickerBarProps> = ({
   isStale,
 }) => {
   const [inputVal, setInputVal] = useState("");
+  const { progress, stage } = useForecastProgress(isLoading);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -118,12 +120,12 @@ export const TickerBar: React.FC<TickerBarProps> = ({
             data-tour="run-forecast"
             onClick={onRunForecast}
             disabled={isLoading}
-            className="console-glow-button flex items-center gap-2 px-6 py-2.5 rounded-2xl text-white font-sans font-bold text-xs tracking-wide cursor-pointer disabled:opacity-60"
+            className="console-glow-button flex items-center gap-2 px-6 py-2.5 rounded-2xl text-white font-sans font-bold text-xs tracking-wide cursor-pointer disabled:opacity-75 transition-all"
           >
             {isLoading ? (
               <>
-                <RefreshCw className="w-4 h-4 animate-spin" />
-                <span>Generating Forecast...</span>
+                <RefreshCw className="w-4 h-4 animate-spin text-white" />
+                <span>Generating ({progress}%)</span>
               </>
             ) : (
               <>
@@ -134,6 +136,29 @@ export const TickerBar: React.FC<TickerBarProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Dynamic Computational Percentage Progress Bar */}
+      {progress > 0 && (
+        <div className="mt-4 pt-3.5 border-t border-beige-300 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="flex justify-between items-center text-xs font-mono mb-1.5">
+            <span className="flex items-center gap-2 text-terracotta-700 font-semibold">
+              <RefreshCw className={`w-3.5 h-3.5 ${progress < 100 ? "animate-spin" : "text-emerald-600"}`} />
+              <span>{stage}</span>
+            </span>
+            <span className="font-bold text-ink-primary font-mono text-xs">{progress}%</span>
+          </div>
+          <div className="w-full bg-beige-200/90 h-2.5 rounded-full overflow-hidden shadow-tactile-well p-0.5">
+            <div
+              className={`h-full rounded-full transition-all duration-150 ease-out shadow-2xs ${
+                progress >= 100
+                  ? "bg-gradient-to-r from-emerald-600 to-emerald-500"
+                  : "bg-gradient-to-r from-terracotta-600 via-amber-500 to-terracotta-500"
+              }`}
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { X, ChevronRight, ChevronLeft, Sparkles, Check, RefreshCw, Lock } from "lucide-react";
+import { useForecastProgress } from "../lib/useForecastProgress";
 
 export interface TourStep {
   target: string; // matches data-tour attribute
@@ -76,6 +77,7 @@ export const FeatureTour: React.FC<FeatureTourProps> = ({
 }) => {
   const [currentStepIdx, setCurrentStepIdx] = useState(0);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
+  const { progress, stage } = useForecastProgress(Boolean(isForecastLoading));
 
   const currentStep = TOUR_STEPS[currentStepIdx];
 
@@ -297,18 +299,27 @@ export const FeatureTour: React.FC<FeatureTourProps> = ({
                     }
                   }}
                   disabled={isForecastLoading}
-                  className="console-glow-button w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-mono font-bold text-white shadow-clay-pill cursor-pointer"
+                  className="console-glow-button w-full flex flex-col items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl text-xs font-mono font-bold text-white shadow-clay-pill cursor-pointer"
                 >
                   {isForecastLoading ? (
                     <>
-                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                      <span>Computing Multi-Horizon Forecast...</span>
+                      <div className="flex items-center gap-2">
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                        <span>Computing Forecast ({progress}%)...</span>
+                      </div>
+                      <span className="text-[10px] font-normal opacity-90">{stage}</span>
+                      <div className="w-full bg-black/20 h-1.5 rounded-full overflow-hidden mt-1 p-0.5">
+                        <div
+                          className="bg-white h-full rounded-full transition-all duration-150"
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
                     </>
                   ) : (
-                    <>
+                    <div className="flex items-center gap-2">
                       <Sparkles className="w-3.5 h-3.5" />
                       <span>Generate Forecast & Unlock Tour &rarr;</span>
-                    </>
+                    </div>
                   )}
                 </button>
               </div>
@@ -372,7 +383,7 @@ export const FeatureTour: React.FC<FeatureTourProps> = ({
                 {isForecastLoading ? (
                   <>
                     <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    <span>Generating...</span>
+                    <span>Generating ({progress}%)...</span>
                   </>
                 ) : (
                   <>
