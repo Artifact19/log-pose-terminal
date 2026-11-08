@@ -174,6 +174,32 @@ export function generateMockActiveModel(ticker: string): ModelVersion {
   };
 }
 
+export function generateMockRetrainDiff(ticker: string): any {
+  const t = ticker.toUpperCase();
+  const now = new Date();
+  const vTag = `v${now.toISOString().replace(/[-:T]/g, "").slice(0, 14)}Z`;
+  return {
+    job_id: `job-${Date.now()}`,
+    ticker: t,
+    retrained: true,
+    activated: true,
+    activation_reason:
+      "Walk-forward validation achieved lower MAE and satisfied empirical coverage constraints (>0.65).",
+    old: {
+      version_tag: "v20261103T150000Z",
+      walk_forward_mae: 2.14,
+      directional_accuracy: 0.528,
+      empirical_coverage_80: 0.771,
+    },
+    new: {
+      version_tag: vTag,
+      walk_forward_mae: 1.82,
+      directional_accuracy: 0.564,
+      empirical_coverage_80: 0.812,
+    },
+  };
+}
+
 export function generateMockHealth(): HealthResponse {
   return {
     status: "ok",

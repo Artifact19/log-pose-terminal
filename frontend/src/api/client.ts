@@ -12,10 +12,15 @@ import {
   generateMockBars,
   generateMockForecast,
   generateMockActiveModel,
+  generateMockRetrainDiff,
   generateMockHealth,
 } from "../lib/mockEngine";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api";
+
+function base64UrlEncode(str: string): string {
+  return btoa(str).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
 
 async function getAuthHeader(): Promise<Record<string, string>> {
   if (isSupabaseConfigured && supabase) {
@@ -30,9 +35,10 @@ async function getAuthHeader(): Promise<Record<string, string>> {
   if (sessionStr) {
     try {
       const u = JSON.parse(sessionStr);
-      const headerB64 = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" }));
-      const payloadB64 = btoa(JSON.stringify({ sub: u.id, email: u.email, role: "authenticated" }));
-      return { Authorization: `Bearer ${headerB64}.${payloadB64}.mocksignature` };
+      const headerB64 = base64UrlEncode(JSON.stringify({ alg: "HS256", typ: "JWT" }));
+      const payloadB64 = base64UrlEncode(JSON.stringify({ sub: u.id, email: u.email, role: "authenticated" }));
+      const sigB64 = base64UrlEncode(JSON.stringify({ sig: "mock" }));
+      return { Authorization: `Bearer ${headerB64}.${payloadB64}.${sigB64}` };
     } catch {}
   }
   return {};
@@ -191,7 +197,7 @@ export const api = {
         method: "POST",
         body: JSON.stringify({ ticker, force }),
       },
-      () => ({ job_id: "local-demo", retrained: true, ticker })
+      () => generateMockRetrainDiff(ticker)
     ),
 
   getRetrainStatus: (jobId: string) =>
