@@ -38,6 +38,10 @@ ledger.db
 # Node / Frontend
 frontend/node_modules/
 frontend/dist/
+.env
+.env.*
+*.env
+frontend/.env
 frontend/.env.local
 frontend/.env.*.local
 *.log

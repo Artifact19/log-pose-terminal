@@ -16,6 +16,11 @@ import {
   generateMockHealth,
 } from "../lib/mockEngine";
 
+import {
+  saveForecastToSupabase,
+  fetchLedgerRunsFromSupabase,
+} from "../lib/supabasePersistence";
+
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api";
 
 function base64UrlEncode(str: string): string {
@@ -114,8 +119,8 @@ export const api = {
       () => generateMockBars(ticker, days)
     ),
 
-  createForecast: (ticker: string, horizon: number = 5, asOf?: string, forceNew: boolean = false) =>
-    request<ForecastRunDetail>(
+  createForecast: async (ticker: string, horizon: number = 5, asOf?: string, forceNew: boolean = false) => {
+    const run = await request<ForecastRunDetail>(
       "/forecast",
       {
         method: "POST",
@@ -127,12 +132,25 @@ export const api = {
         }),
       },
       () => generateMockForecast(ticker, horizon, asOf)
-    ),
+    );
+    // Persist to Supabase and browser cache
+    saveForecastToSupabase(run).catch(() => {});
+    return run;
+  },
 
   getForecast: (runId: string) =>
     request<ForecastRunDetail>(`/forecast/${runId}`, undefined, () => generateMockForecast("AAPL", 5)),
 
-  getLedgerRuns: (ticker?: string, status?: string, limit: number = 50, offset: number = 0) => {
+  getLedgerRuns: async (ticker?: string, status?: string, limit: number = 50, offset: number = 0) => {
+    // 1. Try Supabase & local persistent cache first
+    const persisted = await fetchLedgerRunsFromSupabase(ticker);
+    if (persisted && persisted.length > 0) {
+      if (status && status !== "ALL") {
+        return persisted.filter((r) => r.resolution_status === status);
+      }
+      return persisted;
+    }
+
     const params = new URLSearchParams();
     if (ticker) params.append("ticker", ticker);
     if (status) params.append("status", status);

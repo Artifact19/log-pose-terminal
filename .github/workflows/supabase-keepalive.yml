@@ -1,0 +1,26 @@
+name: Supabase Keep-Alive Ping
+
+on:
+  schedule:
+    # Runs every Monday and Thursday at 06:00 UTC to prevent the 7-day inactivity pause
+    - cron: '0 6 * * 1,4'
+  workflow_dispatch:
+
+jobs:
+  ping-supabase:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST API
+        run: |
+          echo "Sending keep-alive ping to Supabase..."
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "apikey: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhxdG56bWlzampmcXNkd2NsY2FrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyMzQ2OTQsImV4cCI6MjEwNzgxMDY5NH0.35N10RAtI1lKi5g-MAKZzDQAXm21VRyhiQiQ6ZTCaKA' }}" \
+            -H "Authorization: Bearer ${{ secrets.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhxdG56bWlzampmcXNkd2NsY2FrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyMzQ2OTQsImV4cCI6MjEwNzgxMDY5NH0.35N10RAtI1lKi5g-MAKZzDQAXm21VRyhiQiQ6ZTCaKA' }}" \
+            "https://hqtnzmisjjfqsdwclcak.supabase.co/rest/v1/")
+          echo "Supabase responded with HTTP code: $STATUS"
+          if [ "$STATUS" -ge 200 ] && [ "$STATUS" -lt 500 ]; then
+            echo "Ping successful! Database activity registered."
+          else
+            echo "Warning: Response code $STATUS"
+          fi
+
