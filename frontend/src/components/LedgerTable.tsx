@@ -46,13 +46,13 @@ export const LedgerTable: React.FC<LedgerTableProps> = ({
             value={tickerFilter}
             onChange={(e) => setTickerFilter(e.target.value)}
             placeholder="Search symbol..."
-            className="px-3.5 py-1.5 rounded-xl text-xs font-mono border border-beige-300 bg-beige-100/70 focus:bg-white focus:outline-hidden w-32 shadow-inner text-ink-primary"
+            className="px-3.5 py-1.5 rounded-xl text-xs font-mono border border-beige-300 bg-beige-100/70 focus:bg-white focus:outline-none w-32 shadow-inner text-ink-primary"
           />
 
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="tactile-pill px-3 py-1.5 rounded-xl text-xs font-mono text-ink-primary cursor-pointer focus:outline-hidden"
+            className="tactile-pill px-3 py-1.5 rounded-xl text-xs font-mono text-ink-primary cursor-pointer focus:outline-none"
           >
             <option value="ALL">All Forecasts</option>
             <option value="RESOLVED">Fully Verified</option>

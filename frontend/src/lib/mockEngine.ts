@@ -178,7 +178,7 @@ export function generateMockActiveModel(ticker: string): ModelVersion {
 export function generateMockRetrainDiff(ticker: string): any {
   const t = ticker.toUpperCase();
   const now = new Date();
-  const vTag = `v${now.toISOString().replace(/[-:T]/g, "").slice(0, 14)}Z`;
+  const vTag = `v${now.toISOString().replace(/[^\d]/g, "").slice(0, 14)}Z`;
   return {
     job_id: `job-${Date.now()}`,
     ticker: t,

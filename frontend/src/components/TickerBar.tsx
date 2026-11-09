@@ -72,7 +72,7 @@ export const TickerBar: React.FC<TickerBarProps> = ({
               value={inputVal}
               onChange={(e) => setInputVal(e.target.value.toUpperCase())}
               placeholder="Search symbol..."
-              className="pl-8 pr-3 py-1.5 rounded-xl text-xs font-mono border border-beige-300 bg-beige-200/60 shadow-tactile-well focus:bg-white focus:outline-hidden focus:border-terracotta-400 w-36 transition-all text-ink-primary"
+              className="pl-8 pr-3 py-1.5 rounded-xl text-xs font-mono border border-beige-300 bg-beige-200/60 shadow-tactile-well focus:bg-white focus:outline-none focus:border-terracotta-400 w-36 transition-all text-ink-primary"
             />
             <Search className="w-3.5 h-3.5 text-ink-muted absolute left-2.5 pointer-events-none" />
           </form>

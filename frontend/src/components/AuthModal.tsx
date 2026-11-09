@@ -170,7 +170,7 @@ export const AuthModal: React.FC = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@domain.com"
                 required
-                className="w-full pl-9 pr-3 py-2 rounded-xl text-xs font-mono border border-beige-300 bg-beige-100/60 shadow-inner focus:bg-white focus:outline-hidden text-ink-primary"
+                className="w-full pl-9 pr-3 py-2 rounded-xl text-xs font-mono border border-beige-300 bg-beige-100/60 shadow-inner focus:bg-white focus:outline-none text-ink-primary"
               />
               <Mail className="w-4 h-4 text-ink-muted absolute left-3 top-2.5" />
             </div>
@@ -187,7 +187,7 @@ export const AuthModal: React.FC = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                className="w-full pl-9 pr-3 py-2 rounded-xl text-xs font-mono border border-beige-300 bg-beige-100/60 shadow-inner focus:bg-white focus:outline-hidden text-ink-primary"
+                className="w-full pl-9 pr-3 py-2 rounded-xl text-xs font-mono border border-beige-300 bg-beige-100/60 shadow-inner focus:bg-white focus:outline-none text-ink-primary"
               />
               <Lock className="w-4 h-4 text-ink-muted absolute left-3 top-2.5" />
             </div>
