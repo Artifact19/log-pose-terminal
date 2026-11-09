@@ -193,7 +193,13 @@ export const ModelOpsPanel: React.FC<ModelOpsPanelProps> = ({
                 <span className="text-base font-bold text-ink-primary mt-0.5 block">
                   {(activeModel.directional_accuracy * 100).toFixed(1)}%
                 </span>
-                <span className="text-[10px] text-ink-muted block mt-0.5">vs 50% Random Walk</span>
+                {activeModel.directional_accuracy < 0.50 ? (
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300 block mt-1 text-center">
+                    SUB-BASELINE (NEUTRAL DRIFT)
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-ink-muted block mt-0.5">vs 50% Random Walk</span>
+                )}
               </div>
 
               <div className="bg-beige-100/60 p-3 rounded-xl border border-beige-200 shadow-xs" title="Percentage of past prices that landed inside the 80% prediction range (Target: ~80% Conformal Calibration)">

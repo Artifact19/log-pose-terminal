@@ -81,6 +81,14 @@ export const ConfidencePanel: React.FC<ConfidencePanelProps> = ({ run }) => {
                 style={{ width: `${Math.min(100, Math.max(0, comp.accuracy))}%` }}
               />
             </div>
+            {meta.directional_accuracy !== undefined && meta.directional_accuracy < 0.50 && (
+              <div className="mt-2 p-2 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-800 text-[10.5px] flex items-center gap-1.5">
+                <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                <span>
+                  <strong>Below Baseline (&lt;50%):</strong> Directional drift gated to neutral. Model operates as a calibrated volatility cone.
+                </span>
+              </div>
+            )}
           </div>
 
           {/* 2. Calibration (PICP 80) */}

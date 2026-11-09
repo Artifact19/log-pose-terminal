@@ -120,88 +120,6 @@ export function generateMockBars(ticker: string, count: number = 250): MarketBar
   };
 }
 
-export function generateMockForecast(
-  ticker: string,
-  horizon: number = 5,
-  asOf?: string
-): ForecastRunDetail {
-  const t = ticker.toUpperCase();
-  const barsData = generateMockBars(t, 250);
-  const lastBar = barsData.bars[barsData.bars.length - 1];
-  const anchorClose = lastBar ? lastBar.close : getBasePrice(t);
-  const anchorDate = asOf || (lastBar ? lastBar.date : toLocalDateStr(new Date()));
-
-  const points: ForecastPointDetail[] = [];
-  let predPrice = anchorClose;
-  const [aYear, aMonth, aDay] = anchorDate.split("-").map(Number);
-  let curD = new Date(aYear, aMonth - 1, aDay);
-
-  let step = 1;
-
-  while (step <= horizon) {
-    curD.setDate(curD.getDate() + 1);
-    const day = curD.getDay();
-    if (day === 0 || day === 6) continue;
-
-    const expectedReturnPct = Math.sin(step / 3) * 0.008 + 0.003 * step;
-    predPrice = anchorClose * (1 + expectedReturnPct);
-
-    const band80HalfWidth = predPrice * (0.012 * Math.sqrt(step));
-    const band95HalfWidth = predPrice * (0.022 * Math.sqrt(step));
-
-    const dateStr = toLocalDateStr(curD);
-
-    points.push({
-      step_ahead: step,
-      target_trading_date: dateStr,
-      predicted_return: expectedReturnPct,
-      predicted_close: Number(predPrice.toFixed(2)),
-      lower_80: Number((predPrice - band80HalfWidth).toFixed(2)),
-      upper_80: Number((predPrice + band80HalfWidth).toFixed(2)),
-      lower_95: Number((predPrice - band95HalfWidth).toFixed(2)),
-      upper_95: Number((predPrice + band95HalfWidth).toFixed(2)),
-    });
-
-    step++;
-  }
-
-  return {
-    id: generateUUID(),
-    ticker: t,
-    model_version_id: 1,
-    created_at: new Date().toISOString(),
-    anchor_date: anchorDate,
-    anchor_close_price: anchorClose,
-    horizon_days: horizon,
-    confidence_score: 76.5,
-    regime_status: "NORMAL",
-    confidence_metadata: {
-      composite_score: 76.5,
-      directional_accuracy: 0.549,
-      picp_80: 0.788,
-      picp_95: 0.952,
-      mpiw_80_atr: 3.04,
-      regime_vol_z: 0.84,
-      component_scores: {
-        accuracy: 54.9,
-        calibration: 78.8,
-        tightness: 82.0,
-        regime: 88.0,
-      },
-      weights: {
-        accuracy: 0.3,
-        calibration: 0.3,
-        tightness: 0.2,
-        regime: 0.2,
-      },
-    },
-    resolution_status: "PENDING",
-    is_seeded_demo: true,
-    points,
-    history_bars: barsData.bars,
-  };
-}
-
 const TICKER_MODEL_SPECS: Record<string, any> = {
   AAPL: {
     version_tag: "v20261103T152419Z",
@@ -264,6 +182,121 @@ const TICKER_MODEL_SPECS: Record<string, any> = {
     notebook_hash: "2a4c6e8f0b1d3f5a7c9e1b3d5f7a9c1e",
   },
 };
+
+export function generateMockForecast(
+  ticker: string,
+  horizon: number = 5,
+  asOf?: string
+): ForecastRunDetail {
+  const t = ticker.toUpperCase();
+  const barsData = generateMockBars(t, 250);
+  const lastBar = barsData.bars[barsData.bars.length - 1];
+  const anchorClose = lastBar ? lastBar.close : getBasePrice(t);
+  const anchorDate = asOf || (lastBar ? lastBar.date : toLocalDateStr(new Date()));
+
+  const spec = TICKER_MODEL_SPECS[t] || {
+    version_tag: "v20261103T152419Z",
+    walk_forward_mae: 2.27,
+    walk_forward_rmse: 0.032,
+    directional_accuracy: 0.549,
+    empirical_coverage_80: 0.788,
+    empirical_coverage_95: 0.952,
+    mpiw_80_atr: 0.066,
+    notebook_hash: "396a56746d11cddf5f108309e80d6594",
+  };
+
+  const isSubBaseline = spec.directional_accuracy < 0.50;
+
+  const points: ForecastPointDetail[] = [];
+  let predPrice = anchorClose;
+  const [aYear, aMonth, aDay] = anchorDate.split("-").map(Number);
+  let curD = new Date(aYear, aMonth - 1, aDay);
+
+  let step = 1;
+
+  while (step <= horizon) {
+    curD.setDate(curD.getDate() + 1);
+    const day = curD.getDay();
+    if (day === 0 || day === 6) continue;
+
+    // Quant Gating: If walk-forward directional accuracy < 50%, gate directional drift to zero (driftless Martingale cone)
+    const expectedReturnPct = isSubBaseline
+      ? 0
+      : Math.sin(step / 3) * 0.008 + 0.003 * step;
+    predPrice = anchorClose * (1 + expectedReturnPct);
+
+    const band80HalfWidth = predPrice * (0.012 * Math.sqrt(step));
+    const band95HalfWidth = predPrice * (0.022 * Math.sqrt(step));
+
+    const dateStr = toLocalDateStr(curD);
+
+    points.push({
+      step_ahead: step,
+      target_trading_date: dateStr,
+      predicted_return: expectedReturnPct,
+      predicted_close: Number(predPrice.toFixed(2)),
+      lower_80: Number((predPrice - band80HalfWidth).toFixed(2)),
+      upper_80: Number((predPrice + band80HalfWidth).toFixed(2)),
+      lower_95: Number((predPrice - band95HalfWidth).toFixed(2)),
+      upper_95: Number((predPrice + band95HalfWidth).toFixed(2)),
+    });
+
+    step++;
+  }
+
+  // Component breakdown scores dynamically derived from authentic ticker specs
+  const accuracyScore = isSubBaseline
+    ? Math.round(spec.directional_accuracy * 80) // Penalized score below 50% baseline
+    : Math.round(spec.directional_accuracy * 100);
+  const calibrationScore = Math.round(spec.empirical_coverage_80 * 100);
+  const tightnessScore = 78.0;
+  const regimeScore = 85.0;
+
+  const compositeScore = Number(
+    (
+      accuracyScore * 0.3 +
+      calibrationScore * 0.3 +
+      tightnessScore * 0.2 +
+      regimeScore * 0.2
+    ).toFixed(1)
+  );
+
+  return {
+    id: generateUUID(),
+    ticker: t,
+    model_version_id: 1,
+    created_at: new Date().toISOString(),
+    anchor_date: anchorDate,
+    anchor_close_price: anchorClose,
+    horizon_days: horizon,
+    confidence_score: compositeScore,
+    regime_status: "NORMAL",
+    confidence_metadata: {
+      composite_score: compositeScore,
+      directional_accuracy: spec.directional_accuracy,
+      picp_80: spec.empirical_coverage_80,
+      picp_95: spec.empirical_coverage_95,
+      mpiw_80_atr: 3.04,
+      regime_vol_z: 0.84,
+      component_scores: {
+        accuracy: accuracyScore,
+        calibration: calibrationScore,
+        tightness: tightnessScore,
+        regime: regimeScore,
+      },
+      weights: {
+        accuracy: 0.3,
+        calibration: 0.3,
+        tightness: 0.2,
+        regime: 0.2,
+      },
+    },
+    resolution_status: "PENDING",
+    is_seeded_demo: true,
+    points,
+    history_bars: barsData.bars,
+  };
+}
 
 export function generateMockActiveModel(ticker: string): ModelVersion {
   const t = ticker.toUpperCase();
