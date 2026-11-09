@@ -34,14 +34,32 @@ function generateUUID(): string {
   });
 }
 
+function pseudoRandom(seed: number) {
+  let s = seed % 2147483647;
+  if (s <= 0) s += 2147483646;
+  return function () {
+    s = (s * 16807) % 2147483647;
+    return (s - 1) / 2147483646;
+  };
+}
+
+function stringToSeed(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
+
 function getBasePrice(ticker: string): number {
   return BASE_PRICES[ticker.toUpperCase()] || 150.0;
 }
 
 export function generateMockBars(ticker: string, count: number = 250): MarketBarsResponse {
-  const bars: OHLCVBar[] = [];
-  const base = getBasePrice(ticker);
-  let current = base * 0.85;
+  const t = ticker.toUpperCase();
+  const targetClose = getBasePrice(t);
+  const rng = pseudoRandom(stringToSeed(`${t}_bars_stable`));
 
   const now = new Date();
   const dates: Date[] = [];
@@ -56,23 +74,30 @@ export function generateMockBars(ticker: string, count: number = 250): MarketBar
     cur.setDate(cur.getDate() - 1);
   }
 
-  for (let i = 0; i < dates.length; i++) {
-    const d = dates[i];
-    const changePct = Math.sin(i / 10) * 0.015 + (Math.random() - 0.48) * 0.02;
-    const open = current;
-    current = current * (1 + changePct);
-    const high = Math.max(open, current) * (1 + Math.random() * 0.008);
-    const low = Math.min(open, current) * (1 - Math.random() * 0.008);
-    const close = current;
-    const volume = Math.round(15000000 + Math.random() * 10000000);
+  // Work backward from targetClose so historical closes connect seamlessly to targetClose
+  const closes: number[] = [targetClose];
+  for (let i = 1; i < count; i++) {
+    const dailyReturn = (rng() - 0.495) * 0.022 + Math.sin(i / 14) * 0.007;
+    const prevClose = closes[0] / (1 + dailyReturn);
+    closes.unshift(Number(prevClose.toFixed(2)));
+  }
 
-    const dStr = toLocalDateStr(d);
+  const bars: OHLCVBar[] = [];
+  for (let i = 0; i < count; i++) {
+    const close = closes[i];
+    const prevClose = i > 0 ? closes[i - 1] : close * 0.995;
+    const open = Number((prevClose * (1 + (rng() - 0.5) * 0.006)).toFixed(2));
+    const high = Number((Math.max(open, close) * (1 + rng() * 0.007)).toFixed(2));
+    const low = Number((Math.min(open, close) * (1 - rng() * 0.007)).toFixed(2));
+    const volume = Math.round(15000000 + rng() * 10000000);
+    const dStr = toLocalDateStr(dates[i]);
+
     bars.push({
       date: dStr,
-      open: Number(open.toFixed(2)),
-      high: Number(high.toFixed(2)),
-      low: Number(low.toFixed(2)),
-      close: Number(close.toFixed(2)),
+      open,
+      high,
+      low,
+      close,
       volume,
     });
   }
@@ -80,7 +105,7 @@ export function generateMockBars(ticker: string, count: number = 250): MarketBar
   const lastBarDate = bars.length > 0 ? bars[bars.length - 1].date : toLocalDateStr(now);
 
   return {
-    ticker: ticker.toUpperCase(),
+    ticker: t,
     bars,
     last_bar_date: lastBarDate,
     is_stale: false,
