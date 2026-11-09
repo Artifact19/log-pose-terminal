@@ -138,8 +138,12 @@ export const api = {
       },
       () => generateMockForecast(ticker, horizon, asOf)
     );
-    // Persist to Supabase and browser cache
-    saveForecastToSupabase(run).catch(() => {});
+    // Persist to Supabase and browser cache, awaiting completion so points are saved before queries refetch
+    try {
+      await saveForecastToSupabase(run);
+    } catch (e) {
+      console.warn("[Log Pose] Error saving forecast to persistence:", e);
+    }
     return run;
   },
 

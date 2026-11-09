@@ -83,40 +83,61 @@ export async function fetchLedgerRunsFromSupabase(ticker?: string): Promise<Fore
       const { data, error } = await q;
 
       if (!error && data && data.length > 0) {
-        return data.map((r: any) => ({
-          id: r.id,
-          ticker: r.ticker,
-          model_version_id: r.model_version_id || 1,
-          created_at: r.created_at,
-          anchor_date: r.anchor_date,
-          anchor_close_price: r.anchor_close_price,
-          horizon_days: r.horizon_days,
-          confidence_score: r.confidence_score,
-          regime_status: r.regime_status,
-          confidence_metadata: r.confidence_metadata || {},
-          resolution_status: r.resolution_status,
-          is_seeded_demo: Boolean(r.is_seeded_demo),
-          points: (r.forecast_point || [])
-            .sort((a: any, b: any) => a.step_ahead - b.step_ahead)
-            .map((p: any) => ({
-              step_ahead: p.step_ahead,
-              target_trading_date: p.target_trading_date,
-              predicted_return: p.predicted_return,
-              predicted_close: p.predicted_close,
-              lower_80: p.lower_80,
-              upper_80: p.upper_80,
-              lower_95: p.lower_95,
-              upper_95: p.upper_95,
-              actual_close: p.actual_close,
-              actual_return: p.actual_return,
-              abs_error: p.abs_error,
-              pct_error: p.pct_error,
-              direction_correct: p.direction_correct,
-              inside_80_band: p.inside_80_band,
-              inside_95_band: p.inside_95_band,
-              resolved_at: p.resolved_at,
-            })),
-        }));
+        // Read local storage to fill in any points if Supabase query caught a run before points finished saving
+        const localRunsMap = new Map<string, ForecastRunDetail>();
+        try {
+          const cached = JSON.parse(localStorage.getItem("logpose_all_saved_runs") || "[]");
+          if (Array.isArray(cached)) {
+            cached.forEach((cr: ForecastRunDetail) => {
+              if (cr && cr.id) localRunsMap.set(cr.id, cr);
+            });
+          }
+        } catch {}
+
+        return data.map((r: any) => {
+          const rawPoints = r.forecast_point || [];
+          if (rawPoints.length === 0 && localRunsMap.has(r.id)) {
+            const lr = localRunsMap.get(r.id);
+            if (lr && lr.points && lr.points.length > 0) {
+              return lr;
+            }
+          }
+
+          return {
+            id: r.id,
+            ticker: r.ticker,
+            model_version_id: r.model_version_id || 1,
+            created_at: r.created_at,
+            anchor_date: r.anchor_date,
+            anchor_close_price: r.anchor_close_price,
+            horizon_days: r.horizon_days,
+            confidence_score: r.confidence_score,
+            regime_status: r.regime_status,
+            confidence_metadata: r.confidence_metadata || {},
+            resolution_status: r.resolution_status,
+            is_seeded_demo: Boolean(r.is_seeded_demo),
+            points: rawPoints
+              .sort((a: any, b: any) => a.step_ahead - b.step_ahead)
+              .map((p: any) => ({
+                step_ahead: p.step_ahead,
+                target_trading_date: p.target_trading_date,
+                predicted_return: p.predicted_return,
+                predicted_close: p.predicted_close,
+                lower_80: p.lower_80,
+                upper_80: p.upper_80,
+                lower_95: p.lower_95,
+                upper_95: p.upper_95,
+                actual_close: p.actual_close,
+                actual_return: p.actual_return,
+                abs_error: p.abs_error,
+                pct_error: p.pct_error,
+                direction_correct: p.direction_correct,
+                inside_80_band: p.inside_80_band,
+                inside_95_band: p.inside_95_band,
+                resolved_at: p.resolved_at,
+              })),
+          };
+        });
       }
     } catch (err) {
       console.warn("[Supabase] Query exception:", err);

@@ -102,6 +102,14 @@ function TerminalApp() {
     onSuccess: (newRun) => {
       setSelectedRun(newRun);
       setForecastGeneratedInSession(true);
+
+      // Immediately write newRun with all its points directly into the ledger cache so it appears instantly
+      qc.setQueriesData<ForecastRunDetail[]>({ queryKey: ["ledger"] }, (old = []) => {
+        const list = Array.isArray(old) ? old : [];
+        const filtered = list.filter((r) => r.id !== newRun.id);
+        return [newRun, ...filtered];
+      });
+
       qc.invalidateQueries({ queryKey: ["ledger"] });
       qc.invalidateQueries({ queryKey: ["ghosts"] });
       qc.invalidateQueries({ queryKey: ["ledgerStats"] });
