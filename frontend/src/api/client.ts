@@ -21,6 +21,11 @@ import {
   fetchLedgerRunsFromSupabase,
 } from "../lib/supabasePersistence";
 
+import {
+  getStoredModels,
+  saveRetrainedModel,
+} from "../lib/modelPersistence";
+
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api";
 
 function base64UrlEncode(str: string): string {
@@ -194,29 +199,47 @@ export const api = {
       () => ({ resolved_points: 0, affected_runs: 0 })
     ),
 
-  getModels: (ticker: string) =>
-    request<ModelVersion[]>(
-      `/models?ticker=${encodeURIComponent(ticker)}`,
-      undefined,
-      () => [generateMockActiveModel(ticker)]
-    ),
+  getModels: async (ticker: string) => {
+    try {
+      const models = await request<ModelVersion[]>(
+        `/models?ticker=${encodeURIComponent(ticker)}`,
+        undefined,
+        () => getStoredModels(ticker)
+      );
+      if (Array.isArray(models) && models.length > 0) return models;
+    } catch {}
+    return getStoredModels(ticker);
+  },
 
-  getActiveModel: (ticker: string) =>
-    request<ModelVersion>(
-      `/models/active?ticker=${encodeURIComponent(ticker)}`,
-      undefined,
-      () => generateMockActiveModel(ticker)
-    ),
+  getActiveModel: async (ticker: string) => {
+    try {
+      const m = await request<ModelVersion>(
+        `/models/active?ticker=${encodeURIComponent(ticker)}`,
+        undefined,
+        () => {
+          const all = getStoredModels(ticker);
+          return all.find((x) => x.is_active) || all[0];
+        }
+      );
+      if (m) return m;
+    } catch {}
+    const all = getStoredModels(ticker);
+    return all.find((x) => x.is_active) || all[0];
+  },
 
-  triggerRetrain: (ticker: string, force: boolean = false) =>
-    request<{ job_id: string; retrained: boolean; [key: string]: any }>(
+  triggerRetrain: async (ticker: string, force: boolean = false) => {
+    const diff = await request<{ job_id: string; retrained: boolean; [key: string]: any }>(
       "/retrain",
       {
         method: "POST",
         body: JSON.stringify({ ticker, force }),
       },
       () => generateMockRetrainDiff(ticker)
-    ),
+    );
+    // Persist newly trained model version so it appears in the Historical Model Versions registry
+    saveRetrainedModel(ticker, diff);
+    return diff;
+  },
 
   getRetrainStatus: (jobId: string) =>
     request<RetrainStatus>(`/retrain/status/${jobId}`, undefined, () => ({
