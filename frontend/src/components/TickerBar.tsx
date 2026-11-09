@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { Search, Play, RefreshCw, Calendar, Clock } from "lucide-react";
+import { Search, Play, RefreshCw, Calendar, Clock, Globe } from "lucide-react";
 import { getMarketInfo } from "../lib/fmt";
 import { useForecastProgress } from "../lib/useForecastProgress";
+import { useExchangeClock } from "../lib/useExchangeClock";
 
 interface TickerBarProps {
   currentTicker: string;
@@ -33,6 +34,8 @@ export const TickerBar: React.FC<TickerBarProps> = ({
 }) => {
   const [inputVal, setInputVal] = useState("");
   const { progress, stage } = useForecastProgress(isLoading, isError, isSuccess);
+  const mkt = getMarketInfo(currentTicker);
+  const clock = useExchangeClock(mkt.timezone);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,28 +81,44 @@ export const TickerBar: React.FC<TickerBarProps> = ({
           </form>
         </div>
 
-        {/* Controls: Horizon + Freshness + Run Button */}
+        {/* Controls: Live Clock + Horizon + Freshness + Run Button */}
         <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 w-full lg:w-auto justify-start sm:justify-end">
+          {/* Live Exchange Clock */}
+          <div
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono border border-beige-300 bg-beige-200/60 shadow-tactile-well text-ink-primary shrink-0"
+            title={`${mkt.exchangeName} Live Exchange Time (${mkt.timezone})`}
+          >
+            <Clock className="w-3.5 h-3.5 text-terracotta-500 shrink-0" />
+            <span className="font-bold">{clock.timeStr}</span>
+            <span
+              className={`text-[9px] font-bold px-1.5 py-0.2 rounded-full uppercase tracking-wider ${
+                clock.status === "OPEN"
+                  ? "bg-emerald-100 text-emerald-800"
+                  : clock.status === "PRE_MARKET"
+                  ? "bg-amber-100 text-amber-800"
+                  : "bg-beige-300 text-ink-muted"
+              }`}
+            >
+              {clock.statusText}
+            </span>
+          </div>
+
           {/* Data freshness pill */}
-          {lastBarDate && (() => {
-            const mkt = getMarketInfo(currentTicker);
-            return (
-              <div
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono border shadow-2xs ${
-                  isStale
-                    ? "bg-amber-50 text-amber-800 border-amber-200"
-                    : "bg-beige-200/60 text-ink-secondary border-beige-300 shadow-tactile-well"
-                }`}
-                title={`Last daily market close recorded on ${mkt.exchangeName} (${mkt.timezone})`}
-              >
-                <Clock className="w-3.5 h-3.5 text-ink-muted" />
-                <span>Last Close: {lastBarDate}</span>
-                <span className="text-[10px] px-1 py-0.2 rounded-sm bg-beige-300/60 text-ink-primary font-bold">
-                  {mkt.exchangeCode}
-                </span>
-              </div>
-            );
-          })()}
+          {lastBarDate && (
+            <div
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono border shadow-2xs shrink-0 ${
+                isStale
+                  ? "bg-amber-50 text-amber-800 border-amber-200"
+                  : "bg-beige-200/60 text-ink-secondary border-beige-300 shadow-tactile-well"
+              }`}
+              title={`Last daily market close recorded on ${mkt.exchangeName} (${mkt.timezone})`}
+            >
+              <span>Close: {lastBarDate}</span>
+              <span className="text-[10px] px-1 py-0.2 rounded-sm bg-beige-300/60 text-ink-primary font-bold">
+                {mkt.exchangeCode}
+              </span>
+            </div>
+          )}
 
           {/* Horizon Selector (Tactile Tray with Inset Shadows) */}
           <div data-tour="horizon-selector" className="flex items-center gap-1 bg-beige-200/60 p-1 rounded-2xl border border-beige-300 shadow-tactile-well">

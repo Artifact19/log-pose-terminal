@@ -16,6 +16,13 @@ const BASE_PRICES: Record<string, number> = {
   "TCS.NS": 4125.0,
 };
 
+export function toLocalDateStr(d: Date): string {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 function generateUUID(): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
     return crypto.randomUUID();
@@ -59,7 +66,7 @@ export function generateMockBars(ticker: string, count: number = 250): MarketBar
     const close = current;
     const volume = Math.round(15000000 + Math.random() * 10000000);
 
-    const dStr = d.toISOString().split("T")[0];
+    const dStr = toLocalDateStr(d);
     bars.push({
       date: dStr,
       open: Number(open.toFixed(2)),
@@ -70,7 +77,7 @@ export function generateMockBars(ticker: string, count: number = 250): MarketBar
     });
   }
 
-  const lastBarDate = bars.length > 0 ? bars[bars.length - 1].date : now.toISOString().split("T")[0];
+  const lastBarDate = bars.length > 0 ? bars[bars.length - 1].date : toLocalDateStr(now);
 
   return {
     ticker: ticker.toUpperCase(),
@@ -89,14 +96,14 @@ export function generateMockForecast(
   const barsData = generateMockBars(t, 250);
   const lastBar = barsData.bars[barsData.bars.length - 1];
   const anchorClose = lastBar ? lastBar.close : getBasePrice(t);
-  const anchorDate = asOf || (lastBar ? lastBar.date : new Date().toISOString().split("T")[0]);
+  const anchorDate = asOf || (lastBar ? lastBar.date : toLocalDateStr(new Date()));
 
   const points: ForecastPointDetail[] = [];
   let predPrice = anchorClose;
-  const anchorD = new Date(anchorDate);
+  const [aYear, aMonth, aDay] = anchorDate.split("-").map(Number);
+  let curD = new Date(aYear, aMonth - 1, aDay);
 
   let step = 1;
-  let curD = new Date(anchorD.getFullYear(), anchorD.getMonth(), anchorD.getDate());
 
   while (step <= horizon) {
     curD.setDate(curD.getDate() + 1);
@@ -109,7 +116,7 @@ export function generateMockForecast(
     const band80HalfWidth = predPrice * (0.012 * Math.sqrt(step));
     const band95HalfWidth = predPrice * (0.022 * Math.sqrt(step));
 
-    const dateStr = curD.toISOString().split("T")[0];
+    const dateStr = toLocalDateStr(curD);
 
     points.push({
       step_ahead: step,
@@ -164,7 +171,7 @@ export function generateMockForecast(
 
 export function generateMockActiveModel(ticker: string): ModelVersion {
   const t = ticker.toUpperCase();
-  const nowStr = new Date().toISOString().split("T")[0];
+  const nowStr = toLocalDateStr(new Date());
   return {
     id: 1,
     ticker: t,

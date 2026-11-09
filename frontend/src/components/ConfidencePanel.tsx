@@ -1,7 +1,8 @@
 import React from "react";
-import { AlertCircle, HelpCircle, ShieldAlert, Globe } from "lucide-react";
+import { AlertCircle, HelpCircle, ShieldAlert, Globe, Clock } from "lucide-react";
 import { ConfidenceGauge } from "./ConfidenceGauge";
 import { fmtPrice, getMarketInfo } from "../lib/fmt";
+import { useExchangeClock } from "../lib/useExchangeClock";
 import type { ForecastRunDetail } from "../types";
 
 interface ConfidencePanelProps {
@@ -10,6 +11,8 @@ interface ConfidencePanelProps {
 
 export const ConfidencePanel: React.FC<ConfidencePanelProps> = ({ run }) => {
   const meta = run.confidence_metadata || {};
+  const mkt = getMarketInfo(run.ticker);
+  const clock = useExchangeClock(mkt.timezone);
   const comp = meta.component_scores || {
     accuracy: 50,
     calibration: 80,
@@ -146,30 +149,45 @@ export const ConfidencePanel: React.FC<ConfidencePanelProps> = ({ run }) => {
       </div>
 
       {/* Anchor Date, Market Exchange & Base Price Metadata */}
-      {(() => {
-        const mkt = getMarketInfo(run.ticker);
-        return (
-          <div data-tour="market-anchor" className="mt-5 pt-3 border-t border-beige-300 text-[11px] text-ink-muted font-mono space-y-1.5">
-            <div className="flex justify-between items-center">
-              <span className="text-ink-secondary">Anchor Date:</span>
-              <span className="font-bold text-ink-primary">{run.anchor_date}</span>
-            </div>
-            <div className="flex justify-between items-center gap-2">
-              <span className="text-ink-secondary flex items-center gap-1 shrink-0">
-                <Globe className="w-3.5 h-3.5 text-terracotta-500 shrink-0" />
-                Exchange:
-              </span>
-              <span className="font-semibold text-terracotta-700 whitespace-nowrap text-right">
-                {mkt.exchangeCode} <span className="text-[10px] text-ink-muted">({mkt.timezone})</span>
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-ink-secondary">Base Close:</span>
-              <span className="font-bold text-ink-primary">{fmtPrice(run.anchor_close_price, run.ticker)}</span>
-            </div>
+      <div data-tour="market-anchor" className="mt-5 pt-3 border-t border-beige-300 text-[11px] text-ink-muted font-mono space-y-2">
+        <div className="flex justify-between items-center">
+          <span className="text-ink-secondary">Anchor Date:</span>
+          <span className="font-bold text-ink-primary">{run.anchor_date}</span>
+        </div>
+        <div className="flex justify-between items-center gap-2">
+          <span className="text-ink-secondary flex items-center gap-1 shrink-0">
+            <Globe className="w-3.5 h-3.5 text-terracotta-500 shrink-0" />
+            Exchange:
+          </span>
+          <span className="font-semibold text-terracotta-700 whitespace-nowrap text-right">
+            {mkt.exchangeCode}
+          </span>
+        </div>
+
+        {/* Live Market Clock */}
+        <div className="flex items-center justify-between gap-1.5 bg-beige-200/70 px-2.5 py-1.5 rounded-xl border border-beige-300 shadow-tactile-well">
+          <div className="flex items-center gap-1.5">
+            <Clock className="w-3.5 h-3.5 text-terracotta-500 shrink-0" />
+            <span className="font-bold text-ink-primary text-xs">{clock.timeStr}</span>
           </div>
-        );
-      })()}
+          <span
+            className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+              clock.status === "OPEN"
+                ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                : clock.status === "PRE_MARKET"
+                ? "bg-amber-100 text-amber-800 border border-amber-300"
+                : "bg-beige-300 text-ink-secondary border border-beige-400"
+            }`}
+          >
+            {clock.statusText}
+          </span>
+        </div>
+
+        <div className="flex justify-between items-center">
+          <span className="text-ink-secondary">Base Close:</span>
+          <span className="font-bold text-ink-primary">{fmtPrice(run.anchor_close_price, run.ticker)}</span>
+        </div>
+      </div>
     </div>
   );
 };

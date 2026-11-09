@@ -1,7 +1,9 @@
 import React, { useState } from "react";
-import { ChevronDown, ChevronRight, RefreshCw, Filter } from "lucide-react";
+import { ChevronDown, ChevronRight, RefreshCw, Filter, Trash2 } from "lucide-react";
 import { fmtDate, fmtPrice } from "../lib/fmt";
 import { Scorecard } from "./Scorecard";
+import { useAuth } from "../context/AuthContext";
+import { supabase, isSupabaseConfigured } from "../lib/supabase";
 import type { ForecastRunDetail } from "../types";
 
 interface LedgerTableProps {
@@ -20,6 +22,33 @@ export const LedgerTable: React.FC<LedgerTableProps> = ({
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [tickerFilter, setTickerFilter] = useState<string>("");
+  const [isCleaning, setIsCleaning] = useState(false);
+  const { isAdmin } = useAuth();
+
+  const handleAdminReset = async () => {
+    if (!confirm("Are you sure you want to clean all historical forecast runs and reset the ledger?")) return;
+    setIsCleaning(true);
+    try {
+      // 1. Try deleting from Supabase
+      if (isSupabaseConfigured && supabase) {
+        await supabase.from("forecast_point").delete().neq("id", 0);
+        await supabase.from("forecast_run").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+      }
+      // 2. Clear all logpose client cache
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith("logpose_") && !k.includes("session")) {
+          keysToRemove.push(k);
+        }
+      }
+      keysToRemove.forEach((k) => localStorage.removeItem(k));
+      window.location.reload();
+    } catch (e: any) {
+      alert("Error cleaning database: " + e.message);
+      setIsCleaning(false);
+    }
+  };
 
   const toggleExpand = (id: string) => {
     setExpandedId(expandedId === id ? null : id);
@@ -61,15 +90,29 @@ export const LedgerTable: React.FC<LedgerTableProps> = ({
           </select>
         </div>
 
-        <button
-          onClick={onReconcile}
-          disabled={isReconciling}
-          className="tactile-pill flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-mono font-medium text-ink-primary hover:text-terracotta-700 transition-colors cursor-pointer disabled:opacity-50"
-          title="Fetch latest closing prices from the market to audit pending predictions"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${isReconciling ? "animate-spin text-terracotta-500" : "text-ink-muted"}`} />
-          {isReconciling ? "Checking Market Closes..." : "Check Actual Prices"}
-        </button>
+        <div className="flex items-center gap-2">
+          {isAdmin && (
+            <button
+              onClick={handleAdminReset}
+              disabled={isCleaning}
+              className="tactile-pill flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-mono font-medium text-red-700 hover:bg-red-50 hover:border-red-300 transition-colors cursor-pointer disabled:opacity-50"
+              title="Admin: Clear all runs and reset database cache"
+            >
+              <Trash2 className="w-3.5 h-3.5 text-red-600" />
+              <span>{isCleaning ? "Cleaning DB..." : "Clean Database"}</span>
+            </button>
+          )}
+
+          <button
+            onClick={onReconcile}
+            disabled={isReconciling}
+            className="tactile-pill flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-mono font-medium text-ink-primary hover:text-terracotta-700 transition-colors cursor-pointer disabled:opacity-50"
+            title="Fetch latest closing prices from the market to audit pending predictions"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isReconciling ? "animate-spin text-terracotta-500" : "text-ink-muted"}`} />
+            {isReconciling ? "Checking Market Closes..." : "Check Actual Prices"}
+          </button>
+        </div>
       </div>
 
       {/* Runs Table */}
