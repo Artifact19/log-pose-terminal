@@ -5,8 +5,9 @@ import { useForecastProgress } from "../lib/useForecastProgress";
 import { useExchangeClock } from "../lib/useExchangeClock";
 
 interface TickerBarProps {
-  currentTicker: string;
+  currentTicker: string | null;
   onSelectTicker: (ticker: string) => void;
+  onClearTicker?: () => void;
   horizon: number;
   onSelectHorizon: (h: number) => void;
   onRunForecast: () => void;
@@ -23,6 +24,7 @@ const PRESET_HORIZONS = [3, 5, 10, 14, 20];
 export const TickerBar: React.FC<TickerBarProps> = ({
   currentTicker,
   onSelectTicker,
+  onClearTicker,
   horizon,
   onSelectHorizon,
   onRunForecast,
@@ -34,7 +36,7 @@ export const TickerBar: React.FC<TickerBarProps> = ({
 }) => {
   const [inputVal, setInputVal] = useState("");
   const { progress, stage } = useForecastProgress(isLoading, isError, isSuccess);
-  const mkt = getMarketInfo(currentTicker);
+  const mkt = getMarketInfo(currentTicker || "AAPL");
   const clock = useExchangeClock(mkt.timezone);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -51,7 +53,21 @@ export const TickerBar: React.FC<TickerBarProps> = ({
       <div className="flex flex-col lg:flex-row items-center justify-between gap-4">
         {/* Ticker chips & search */}
         <div data-tour="ticker-bar" className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
-          <span className="text-xs font-bold text-ink-muted uppercase tracking-wider mr-1">
+          {/* All Symbols / Hub button */}
+          <button
+            onClick={() => onClearTicker && onClearTicker()}
+            className={`px-3 py-1.5 rounded-xl text-xs font-mono font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
+              !currentTicker
+                ? "bg-gradient-to-r from-terracotta-600 to-terracotta-500 text-white shadow-clay-pill border-t border-white/40 scale-102"
+                : "tactile-pill text-ink-primary hover:text-terracotta-600"
+            }`}
+            title="Overview of all symbols and forecast history"
+          >
+            <Globe className="w-3.5 h-3.5" />
+            <span>All Symbols</span>
+          </button>
+
+          <span className="text-xs font-bold text-ink-muted uppercase tracking-wider mx-1">
             Presets:
           </span>
           {PRESET_TICKERS.map((t) => (
@@ -153,7 +169,11 @@ export const TickerBar: React.FC<TickerBarProps> = ({
             ) : (
               <>
                 <Play className="w-3.5 h-3.5 fill-current" />
-                <span>Generate {horizon}-Day Forecast</span>
+                <span>
+                  {currentTicker
+                    ? `Generate ${horizon}-Day Forecast`
+                    : "Select a Ticker to Forecast"}
+                </span>
               </>
             )}
           </button>
