@@ -27,15 +27,15 @@ export function generateMockBars(ticker: string, count: number = 250): MarketBar
 
   const now = new Date();
   const dates: Date[] = [];
-  const daysBack = count * 1.5;
+  let cur = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-  for (let i = daysBack; i >= 0; i--) {
-    const d = new Date(now.getTime() - i * 86400000);
-    const day = d.getDay();
+  // Count backwards from current date to gather the exact count of trading days leading up to today
+  while (dates.length < count) {
+    const day = cur.getDay();
     if (day !== 0 && day !== 6) {
-      dates.push(d);
+      dates.unshift(new Date(cur));
     }
-    if (dates.length >= count) break;
+    cur.setDate(cur.getDate() - 1);
   }
 
   for (let i = 0; i < dates.length; i++) {
@@ -72,23 +72,23 @@ export function generateMockBars(ticker: string, count: number = 250): MarketBar
 export function generateMockForecast(
   ticker: string,
   horizon: number = 5,
-  _asOf?: string
+  asOf?: string
 ): ForecastRunDetail {
   const t = ticker.toUpperCase();
   const barsData = generateMockBars(t, 250);
   const lastBar = barsData.bars[barsData.bars.length - 1];
   const anchorClose = lastBar ? lastBar.close : getBasePrice(t);
-  const anchorDate = lastBar ? lastBar.date : new Date().toISOString().split("T")[0];
+  const anchorDate = asOf || (lastBar ? lastBar.date : new Date().toISOString().split("T")[0]);
 
   const points: ForecastPointDetail[] = [];
   let predPrice = anchorClose;
   const anchorD = new Date(anchorDate);
 
   let step = 1;
-  let curD = new Date(anchorD.getTime());
+  let curD = new Date(anchorD.getFullYear(), anchorD.getMonth(), anchorD.getDate());
 
   while (step <= horizon) {
-    curD = new Date(curD.getTime() + 86400000);
+    curD.setDate(curD.getDate() + 1);
     const day = curD.getDay();
     if (day === 0 || day === 6) continue;
 
@@ -153,6 +153,7 @@ export function generateMockForecast(
 
 export function generateMockActiveModel(ticker: string): ModelVersion {
   const t = ticker.toUpperCase();
+  const nowStr = new Date().toISOString().split("T")[0];
   return {
     id: 1,
     ticker: t,
@@ -160,7 +161,7 @@ export function generateMockActiveModel(ticker: string): ModelVersion {
     methodology_name: "XGBoostDirectMultiHorizon",
     trained_at: new Date().toISOString(),
     train_start_date: "2019-01-01",
-    train_end_date: "2026-11-06",
+    train_end_date: nowStr,
     horizon_days: 20,
     walk_forward_mae: 2.14,
     walk_forward_rmse: 0.031,
