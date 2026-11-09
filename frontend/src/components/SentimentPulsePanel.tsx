@@ -188,11 +188,30 @@ export const SentimentPulsePanel: React.FC<SentimentPulsePanelProps> = ({
         <div className="bg-beige-100/70 p-4 rounded-2xl border border-beige-200 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between text-xs text-ink-muted mb-1">
             <span className="uppercase text-[10px] tracking-wider font-semibold">Headline Consensus</span>
-            <span className="text-[10px] text-ink-muted">{sentiment.articles_analyzed} Stories</span>
+            <span
+              className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${
+                sentiment.news_velocity === "HIGH" || sentiment.articles_analyzed >= 8
+                  ? "bg-terracotta-100 text-terracotta-800 border-terracotta-300"
+                  : sentiment.articles_analyzed >= 4
+                  ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                  : "bg-beige-200 text-ink-secondary border-beige-300"
+              }`}
+            >
+              {sentiment.news_velocity === "HIGH" || sentiment.articles_analyzed >= 8
+                ? "HIGH VELOCITY"
+                : sentiment.articles_analyzed >= 4
+                ? "NORMAL VELOCITY"
+                : "MODERATE VELOCITY"}
+            </span>
+          </div>
+
+          <div className="text-[10.5px] text-ink-secondary font-sans mt-0.5">
+            <strong>{sentiment.articles_analyzed}</strong> live stories captured{" "}
+            {sentiment.volume_24h ? `(${sentiment.volume_24h} in past 24h)` : ""}
           </div>
 
           {/* Bar */}
-          <div className="w-full bg-beige-300 h-2.5 rounded-full overflow-hidden flex my-2 shadow-inner">
+          <div className="w-full bg-beige-300 h-2 rounded-full overflow-hidden flex my-2 shadow-inner">
             <div
               style={{ width: `${bullishPct}%` }}
               className="bg-emerald-500 h-full transition-all duration-500"
@@ -228,9 +247,9 @@ export const SentimentPulsePanel: React.FC<SentimentPulsePanelProps> = ({
       {isExpanded && (
         <div>
           <div className="text-xs font-semibold text-ink-secondary mb-3 flex items-center justify-between">
-            <span>Analyzed Breaking Financial Headlines:</span>
+            <span>Dynamic Feed: {sentiment.articles_analyzed} Breaking Stories Analyzed</span>
             <span className="text-[11px] text-ink-muted font-mono">
-              Real-time Google News & Yahoo Finance feed
+              Live Yahoo Finance & Google News stream
             </span>
           </div>
 

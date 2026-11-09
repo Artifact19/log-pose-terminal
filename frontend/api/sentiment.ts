@@ -61,13 +61,13 @@ export default async function handler(req: any, res: any) {
             pubDate: timeStr,
             source: n.publisher || "Yahoo Finance",
           });
-          if (rawItems.length >= 8) break;
+          if (rawItems.length >= 15) break;
         }
       }
     } catch {}
 
-    // 2. If fewer than 4 articles found, supplement with Google News RSS
-    if (rawItems.length < 4) {
+    // 2. If fewer than 6 articles found, supplement with Google News RSS
+    if (rawItems.length < 6) {
       const rssUrl =
         config.region === "IN"
           ? `https://news.google.com/rss/search?q=${encodeURIComponent(config.query)}&hl=en-IN&gl=IN&ceid=IN:en`
@@ -87,7 +87,7 @@ export default async function handler(req: any, res: any) {
           /<item>[\s\S]*?<title>(.*?)<\/title>[\s\S]*?<link>(.*?)<\/link>[\s\S]*?<pubDate>(.*?)<\/pubDate>[\s\S]*?(?:<source[^>]*>(.*?)<\/source>)?[\s\S]*?<\/item>/g;
 
         let match;
-        while ((match = itemRegex.exec(xmlText)) !== null && rawItems.length < 8) {
+        while ((match = itemRegex.exec(xmlText)) !== null && rawItems.length < 15) {
           const rawTitle = match[1]
             .replace(/<!\[CDATA\[(.*?)\]\]>/g, "$1")
             .replace(/&amp;/g, "&")
@@ -318,12 +318,25 @@ export default async function handler(req: any, res: any) {
 
     const driftTiltPct = Number((compositeScore * 1.5).toFixed(2));
 
+    const volume24h = scoredArticles.filter((a) => {
+      const p = a.published_at.toLowerCase();
+      return p.includes("hour") || p.includes("just now") || p.includes("minute");
+    }).length;
+
+    let velocityStatus: "HIGH" | "NORMAL" | "MODERATE" | "LOW" = "NORMAL";
+    if (articlesCount >= 8) velocityStatus = "HIGH";
+    else if (articlesCount >= 5) velocityStatus = "NORMAL";
+    else if (articlesCount >= 3) velocityStatus = "MODERATE";
+    else velocityStatus = "LOW";
+
     return res.status(200).json({
       ticker: rawTicker,
       score: compositeScore,
       label: aggregateLabel,
       drift_tilt_pct: driftTiltPct,
       articles_analyzed: articlesCount,
+      news_velocity: velocityStatus,
+      volume_24h: volume24h,
       bullish_count: bullishCount,
       bearish_count: bearishCount,
       neutral_count: neutralCount,

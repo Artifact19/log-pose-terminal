@@ -168,6 +168,8 @@ export interface SentimentResponse {
   bearish_count: number;
   neutral_count: number;
   articles: NewsSentimentArticle[];
+  news_velocity?: "HIGH" | "NORMAL" | "MODERATE" | "LOW";
+  volume_24h?: number;
   as_of: string;
 }
 
