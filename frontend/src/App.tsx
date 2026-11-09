@@ -32,7 +32,7 @@ function TerminalApp() {
   const [selectedRun, setSelectedRun] = useState<ForecastRunDetail | null>(null);
   const [isTourOpen, setIsTourOpen] = useState(false);
   const [forecastGeneratedInSession, setForecastGeneratedInSession] = useState(false);
-  const { shouldLaunchTour, resetTourLaunch } = useAuth();
+  const { shouldLaunchTour, resetTourLaunch, isAdmin } = useAuth();
 
   // Show tour ONLY when someone signs up for the first time
   useEffect(() => {
@@ -276,11 +276,14 @@ function TerminalApp() {
       <FeatureTour
         isOpen={isTourOpen}
         onClose={handleCloseTour}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        isAdmin={isAdmin}
         onRunForecast={() => forecastMutation.mutate()}
         isForecastLoading={forecastMutation.isPending}
         isForecastError={forecastMutation.isError}
         isForecastSuccess={forecastMutation.isSuccess}
-        hasForecast={forecastGeneratedInSession}
+        hasForecast={forecastGeneratedInSession || Boolean(activeRun)}
       />
 
       {/* Supabase Authentication & Profile Modal */}

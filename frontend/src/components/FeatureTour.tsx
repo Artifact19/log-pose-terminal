@@ -1,68 +1,142 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { X, ChevronRight, ChevronLeft, Sparkles, Check, RefreshCw, Lock } from "lucide-react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { X, ChevronRight, ChevronLeft, Sparkles, Check, RefreshCw, Lock, Shield, Eye, BarChart2, Cpu } from "lucide-react";
 import { useForecastProgress } from "../lib/useForecastProgress";
 
 export interface TourStep {
   target: string; // matches data-tour attribute
+  tab: "terminal" | "ledger" | "models";
   title: string;
   sentence: string;
   placement?: "top" | "bottom" | "left" | "right" | "center";
 }
 
-const TOUR_STEPS: TourStep[] = [
+// 1. Trader / Normal User Tour (Terminal + Ledger pages)
+export const USER_TOUR_STEPS: TourStep[] = [
   {
     target: "ticker-bar",
-    title: "Stock Selector & Search",
-    sentence: "Pick preset stocks from US or Indian markets, or type any stock symbol in the search bar to analyze.",
+    tab: "terminal",
+    title: "Asset Selector & Search",
+    sentence: "Switch between preset US Mega-caps (AAPL, NVDA, MSFT, SPY) and Indian Equities (RELIANCE.NS, TCS.NS), or type any stock symbol in the search box to analyze.",
     placement: "bottom",
   },
   {
     target: "horizon-selector",
-    title: "Forecast Timeframe",
-    sentence: "Choose how many future trading sessions to project (from 3 days up to 20 full sessions).",
+    tab: "terminal",
+    title: "Forecast Horizon Timeframe",
+    sentence: "Select your projection horizon from 3 days up to 20 full trading sessions. The ML model predicts direct multi-horizon price trajectories for each selected timeframe.",
     placement: "bottom",
   },
   {
     target: "run-forecast",
-    title: "Generate Forecast",
-    sentence: "Runs our machine learning models to project expected prices and calibrated uncertainty bands.",
+    tab: "terminal",
+    title: "ML Forecast Engine",
+    sentence: "Executes our gradient-boosted multi-horizon quantile ensemble model to project expected price paths and calibrated statistical uncertainty bounds.",
     placement: "bottom",
   },
   {
     target: "master-chart",
-    title: "Interactive Trajectory Chart",
-    sentence: "Visualizes the expected future price path surrounded by 80% likely and 95% safety ranges.",
+    tab: "terminal",
+    title: "Interactive Trajectory Canvas",
+    sentence: "Visualizes the expected future path (dashed terracotta line) surrounded by the 80% likely corridor and 95% wider safety range, anchored strictly on the latest market close.",
     placement: "top",
   },
   {
+    target: "chart-type-toggle",
+    tab: "terminal",
+    title: "Candlestick vs Line Toggle",
+    sentence: "Switch between full Japanese Candlesticks (open, high, low, close with colored wicks) and a clean single closing price line for flexible price action analysis.",
+    placement: "bottom",
+  },
+  {
+    target: "ghost-forecasts-toggle",
+    tab: "terminal",
+    title: "Past Forecasts & Ghost Runs (Past 10)",
+    sentence: "Toggles historical predictions made in prior trading sessions. Verified actual closes are plotted as green circles (hits inside the 80% corridor) or red 'x' marks (misses) for visual proof of accuracy.",
+    placement: "bottom",
+  },
+  {
     target: "reliability-gauge",
+    tab: "terminal",
     title: "Prediction Reliability Gauge",
-    sentence: "Combines past trend accuracy, range coverage, and market volatility into an overall confidence score out of 100.",
+    sentence: "A composite confidence score (0–100) combining Trend Accuracy (vs 50% Random Walk), Range Accuracy (PICP ~80%), Band Tightness (ATR-normalized), and Market Volatility Regime.",
     placement: "left",
   },
   {
     target: "market-anchor",
-    title: "Exchange & Anchor Date",
-    sentence: "Shows the specific stock exchange, local timezone, and the last completed market close that anchors the forecast.",
+    tab: "terminal",
+    title: "Exchange & Anchor Verification",
+    sentence: "Displays the exchange market code, timezone (US ET vs India IST), and the exact market close date and price that anchor this forecast.",
     placement: "left",
   },
   {
     target: "forecast-table",
-    title: "Price Projections Table",
-    sentence: "Detailed day-by-day table showing expected prices, percentage changes, and probability bands for every upcoming session.",
+    tab: "terminal",
+    title: "Day-by-Day Price Projections",
+    sentence: "Tabular breakdown for every upcoming trading session, detailing target dates, expected closing prices, likely 80% intervals, 95% safety ranges, and expected percentage moves.",
     placement: "top",
   },
   {
-    target: "nav-tabs",
-    title: "Audit Ledger & Track Record",
-    sentence: "Switch to 'Track Record & History' to verify how past forecasts performed against actual market closing prices.",
+    target: "ledger-stats",
+    tab: "ledger",
+    title: "Track Record Performance Strip",
+    sentence: "Switches to Track Record & History to show cumulative verification metrics: Average Error (MAE) vs 2.65% Persistence Baseline and Directional Trend Win Rate vs 50% Random Walk.",
     placement: "bottom",
+  },
+  {
+    target: "ledger-filters",
+    tab: "ledger",
+    title: "Audit Filters & Price Reconciliation",
+    sentence: "Filter past predictions by symbol or status. Click 'Check Actual Prices' to fetch market closing prices and settle all pending forecasts against real-world data.",
+    placement: "bottom",
+  },
+  {
+    target: "ledger-table",
+    tab: "ledger",
+    title: "Historical Forecast Audit Ledger",
+    sentence: "Every forecast generated is logged here immutably. Expand any row to inspect its verification scorecard, or click 'View on Chart' to inspect historical forecast trajectories.",
+    placement: "top",
+  },
+];
+
+// 2. Administrator Tour (Terminal + Ledger + AI Model Status pages)
+export const ADMIN_TOUR_STEPS: TourStep[] = [
+  ...USER_TOUR_STEPS,
+  {
+    target: "model-overview",
+    tab: "models",
+    title: "Active Model Architecture & Checksum",
+    sentence: "Switches to AI Models Status. View the production model version tag, architecture (XGBoost Direct Multi-Horizon Quantile Ensemble), and immutable SHA-256 notebook checksum.",
+    placement: "bottom",
+  },
+  {
+    target: "model-metrics",
+    tab: "models",
+    title: "Walk-Forward Backtest Benchmarks",
+    sentence: "Inspect out-of-sample backtest scores: Historical MAE vs 2.65% Baseline, Trend Directional Accuracy vs 50% Random Walk, and empirical 80% / 95% Conformal Quantile Coverage.",
+    placement: "top",
+  },
+  {
+    target: "model-retrain-controls",
+    tab: "models",
+    title: "Model Recalibration & Retraining Controls",
+    sentence: "As Administrator, toggle 'Force Full Recalibration' to rebuild all walk-forward folds from scratch, or trigger retraining to update the model with the latest historical bars.",
+    placement: "bottom",
+  },
+  {
+    target: "model-history",
+    tab: "models",
+    title: "Model Version Registry & Audit Trail",
+    sentence: "Full immutable registry of all trained model versions, showing training dates, walk-forward validation scores, and active vs archived deployment statuses.",
+    placement: "top",
   },
 ];
 
 interface FeatureTourProps {
   isOpen: boolean;
   onClose: () => void;
+  activeTab: "terminal" | "ledger" | "models";
+  setActiveTab: (tab: "terminal" | "ledger" | "models") => void;
+  isAdmin?: boolean;
   onRunForecast?: () => void;
   isForecastLoading?: boolean;
   isForecastError?: boolean;
@@ -73,33 +147,72 @@ interface FeatureTourProps {
 export const FeatureTour: React.FC<FeatureTourProps> = ({
   isOpen,
   onClose,
+  activeTab,
+  setActiveTab,
+  isAdmin = false,
   onRunForecast,
   isForecastLoading = false,
   isForecastError = false,
   isForecastSuccess = false,
   hasForecast,
 }) => {
+  const steps = isAdmin ? ADMIN_TOUR_STEPS : USER_TOUR_STEPS;
   const [currentStepIdx, setCurrentStepIdx] = useState(0);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
+  const retryTimeoutRef = useRef<number | null>(null);
+
   const { progress, stage } = useForecastProgress(
     Boolean(isForecastLoading),
     Boolean(isForecastError),
     Boolean(isForecastSuccess)
   );
 
-  const currentStep = TOUR_STEPS[currentStepIdx];
+  const currentStep = steps[currentStepIdx] || steps[0];
 
+  // When tour opens or closes, reset to step 0 and start on terminal
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentStepIdx(0);
+      if (activeTab !== "terminal") {
+        setActiveTab("terminal");
+      }
+    }
+  }, [isOpen]);
+
+  // Synchronize Tab automatically whenever step changes
+  useEffect(() => {
+    if (isOpen && currentStep) {
+      if (activeTab !== currentStep.tab) {
+        setActiveTab(currentStep.tab);
+      }
+    }
+  }, [isOpen, currentStepIdx, currentStep?.tab]);
+
+  // Smoothly locate target element in DOM, with retries to account for tab transition renders
   const updateTargetPosition = useCallback(() => {
     if (!isOpen || !currentStep) return;
-    const el = document.querySelector(`[data-tour="${currentStep.target}"]`);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
-      setTimeout(() => {
-        setTargetRect(el.getBoundingClientRect());
-      }, 250);
-    } else {
-      setTargetRect(null);
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = null;
     }
+
+    let attempts = 0;
+    const findElement = () => {
+      const el = document.querySelector(`[data-tour="${currentStep.target}"]`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+        setTimeout(() => {
+          setTargetRect(el.getBoundingClientRect());
+        }, 180);
+      } else if (attempts < 6) {
+        attempts++;
+        retryTimeoutRef.current = window.setTimeout(findElement, 120);
+      } else {
+        setTargetRect(null);
+      }
+    };
+
+    findElement();
   }, [isOpen, currentStep]);
 
   useEffect(() => {
@@ -109,29 +222,19 @@ export const FeatureTour: React.FC<FeatureTourProps> = ({
       window.addEventListener("resize", handleResize);
       window.addEventListener("scroll", handleResize, true);
       return () => {
+        if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current);
         window.removeEventListener("resize", handleResize);
         window.removeEventListener("scroll", handleResize, true);
       };
     }
-  }, [isOpen, currentStepIdx, updateTargetPosition]);
+  }, [isOpen, currentStepIdx, activeTab, updateTargetPosition]);
 
-  // AUTO-ADVANCE ONLY WHEN FORECAST IS TRULY GENERATED:
-  // When at Step 3 (index 2) and the forecast finishes generating successfully, advance to Step 4
-  useEffect(() => {
-    if (isOpen && currentStepIdx === 2 && hasForecast && !isForecastLoading) {
-      const timer = setTimeout(() => {
-        setCurrentStepIdx(3);
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [isOpen, currentStepIdx, hasForecast, isForecastLoading]);
-
-  // Keyboard controls
+  // Keyboard controls (Arrow keys & Escape)
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        onClose();
+        handleClose();
       } else if (e.key === "ArrowRight") {
         handleNext();
       } else if (e.key === "ArrowLeft") {
@@ -145,17 +248,17 @@ export const FeatureTour: React.FC<FeatureTourProps> = ({
   if (!isOpen) return null;
 
   const handleNext = () => {
-    // HARD LOCK: Cannot advance past Step 3 (index 2) unless forecast is generated!
+    // If on Step 3 (index 2: run-forecast) and NO forecast has been generated yet, prompt generation
     if (currentStepIdx === 2 && !hasForecast) {
       if (onRunForecast && !isForecastLoading) {
         onRunForecast();
       }
       return;
     }
-    if (currentStepIdx < TOUR_STEPS.length - 1) {
+    if (currentStepIdx < steps.length - 1) {
       setCurrentStepIdx(currentStepIdx + 1);
     } else {
-      onClose();
+      handleClose();
     }
   };
 
@@ -165,37 +268,42 @@ export const FeatureTour: React.FC<FeatureTourProps> = ({
     }
   };
 
+  const handleClose = () => {
+    setActiveTab("terminal");
+    onClose();
+  };
+
   // Dynamic positioning so the dialog card never covers the spotlighted element
   let cardStyle: React.CSSProperties = {
     position: "fixed",
     top: "50%",
     left: "50%",
     transform: "translate(-50%, -50%)",
-    maxWidth: 460,
+    maxWidth: 480,
     width: "calc(100% - 32px)",
   };
 
   if (targetRect) {
     const spaceBelow = window.innerHeight - targetRect.bottom;
     const spaceAbove = targetRect.top;
-    const cardWidth = 460;
+    const cardWidth = 480;
     const idealLeft = Math.max(
       16,
       Math.min(window.innerWidth - cardWidth - 16, targetRect.left + targetRect.width / 2 - cardWidth / 2)
     );
 
-    if (spaceBelow >= 260) {
+    if (spaceBelow >= 270) {
       cardStyle = {
         position: "fixed",
-        top: Math.min(window.innerHeight - 280, targetRect.bottom + 16),
+        top: Math.min(window.innerHeight - 300, targetRect.bottom + 16),
         left: idealLeft,
         maxWidth: cardWidth,
         width: "calc(100% - 32px)",
       };
-    } else if (spaceAbove >= 260) {
+    } else if (spaceAbove >= 270) {
       cardStyle = {
         position: "fixed",
-        top: Math.max(16, targetRect.top - 260),
+        top: Math.max(16, targetRect.top - 270),
         left: idealLeft,
         maxWidth: cardWidth,
         width: "calc(100% - 32px)",
@@ -203,12 +311,23 @@ export const FeatureTour: React.FC<FeatureTourProps> = ({
     }
   }
 
+  const getTabLabel = (tab: "terminal" | "ledger" | "models") => {
+    switch (tab) {
+      case "terminal":
+        return "Forecast Terminal";
+      case "ledger":
+        return "Track Record & History";
+      case "models":
+        return "AI Models Status";
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 overflow-hidden pointer-events-auto">
       {/* SVG Mask: Dims everything EXCEPT the target element (Zero blur on selected element) */}
       <svg
         className="fixed inset-0 w-full h-full pointer-events-auto z-0 cursor-pointer"
-        onClick={onClose}
+        onClick={handleClose}
       >
         <defs>
           <mask id="tour-spotlight-mask">
@@ -238,7 +357,7 @@ export const FeatureTour: React.FC<FeatureTourProps> = ({
         />
       </svg>
 
-      {/* Crisp glowing bezel around the crystal-clear unblurred target element */}
+      {/* Crisp glowing bezel around the unblurred target element */}
       {targetRect && (
         <div
           className="fixed border-2 border-terracotta-500 rounded-2xl pointer-events-none transition-all duration-300 ring-4 ring-terracotta-400/40 shadow-[0_0_24px_rgba(200,90,50,0.4)] z-10"
@@ -251,21 +370,43 @@ export const FeatureTour: React.FC<FeatureTourProps> = ({
         />
       )}
 
-      {/* Floating Tour Card */}
+      {/* Floating Tour Dialog Card */}
       <div
         style={cardStyle}
         className="z-20 bg-[#FAF6F0] rounded-3xl border-2 border-beige-300 shadow-tactile-card p-6 animate-in fade-in zoom-in-95 duration-200 pointer-events-auto"
       >
-        {/* Card Top: Step counter & close button */}
-        <div className="flex items-center justify-between mb-3.5 pb-2 border-b border-beige-200">
-          <div className="flex items-center gap-2">
+        {/* Card Top: Step counter, Tour role badge, Tab pill, & close button */}
+        <div className="flex items-center justify-between mb-3 pb-2.5 border-b border-beige-200">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="flex items-center gap-1 text-[11px] font-mono font-bold text-terracotta-700 bg-beige-200/90 px-2.5 py-0.5 rounded-full border border-beige-300 shadow-2xs">
               <Sparkles className="w-3 h-3 text-terracotta-500" />
-              Step {currentStepIdx + 1} of {TOUR_STEPS.length}
+              Step {currentStepIdx + 1} of {steps.length}
+            </span>
+
+            <span
+              className={`flex items-center gap-1 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${
+                isAdmin
+                  ? "bg-amber-50 text-amber-800 border-amber-300 shadow-2xs"
+                  : "bg-beige-200/80 text-ink-secondary border-beige-300"
+              }`}
+            >
+              {isAdmin ? (
+                <>
+                  <Shield className="w-2.5 h-2.5 text-amber-600" />
+                  <span>Admin Tour</span>
+                </>
+              ) : (
+                <span>Trader Tour</span>
+              )}
+            </span>
+
+            <span className="text-[10px] font-mono text-ink-muted bg-white/70 px-2 py-0.5 rounded-full border border-beige-200">
+              {getTabLabel(currentStep.tab)}
             </span>
           </div>
+
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="p-1 rounded-xl text-ink-muted hover:text-ink-primary hover:bg-beige-200/60 transition-colors cursor-pointer"
             title="Close tour"
           >
@@ -273,22 +414,27 @@ export const FeatureTour: React.FC<FeatureTourProps> = ({
           </button>
         </div>
 
-        {/* Title */}
+        {/* Step Title */}
         <h4 className="text-base font-bold text-ink-primary font-mono tracking-tight mb-2">
           {currentStep.title}
         </h4>
 
-        {/* Dynamic Content */}
+        {/* Step 3 Special Handling: Forecast Generation */}
         {currentStepIdx === 2 ? (
           <div className="space-y-3 mb-5">
             <p className="text-sm text-ink-secondary leading-relaxed font-sans">
-              Runs our machine learning models to project expected prices and calibrated uncertainty bands.
+              Executes our machine learning models to project expected prices and calibrated uncertainty bands for upcoming sessions.
             </p>
-            
+
             {hasForecast ? (
-              <div className="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-200 text-emerald-800 text-xs font-mono flex items-center gap-2">
-                <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>Forecast generated successfully! Advancing to interactive chart...</span>
+              <div className="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-200 text-emerald-800 text-xs font-mono space-y-1.5 shadow-2xs">
+                <div className="flex items-center gap-2 font-bold">
+                  <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>Forecast generated successfully!</span>
+                </div>
+                <p className="text-[11px] text-emerald-700 font-sans leading-relaxed">
+                  The chart trajectory, reliability score, and price table are now active. Click <strong>Next</strong> when you are ready to explore them.
+                </p>
               </div>
             ) : (
               <div className="p-3.5 bg-beige-200/70 rounded-2xl border border-beige-300 shadow-tactile-well">
@@ -297,7 +443,7 @@ export const FeatureTour: React.FC<FeatureTourProps> = ({
                   <span>Forecast Required to Unlock Next Steps</span>
                 </div>
                 <p className="text-xs text-ink-secondary mb-3 leading-relaxed">
-                  The chart, confidence score, and price table require a live forecast to display. Click below to run the models now:
+                  The trajectory chart, prediction reliability score, and price projections table require a live forecast. Click below to compute:
                 </p>
                 <button
                   type="button"
@@ -340,9 +486,10 @@ export const FeatureTour: React.FC<FeatureTourProps> = ({
         )}
 
         {/* Progress dots & Navigation buttons */}
-        <div className="flex items-center justify-between pt-2 border-t border-beige-200">
-          <div className="flex items-center gap-1.5">
-            {TOUR_STEPS.map((_, idx) => {
+        <div className="flex items-center justify-between pt-2.5 border-t border-beige-200">
+          {/* Progress dots */}
+          <div className="flex items-center gap-1 max-w-[200px] flex-wrap">
+            {steps.map((_, idx) => {
               const isLocked = idx > 2 && !hasForecast;
               return (
                 <button
@@ -356,7 +503,7 @@ export const FeatureTour: React.FC<FeatureTourProps> = ({
                     isLocked
                       ? "w-1.5 bg-beige-300/40 cursor-not-allowed"
                       : idx === currentStepIdx
-                      ? "w-5 bg-terracotta-500 cursor-pointer"
+                      ? "w-4 bg-terracotta-500 cursor-pointer"
                       : "w-1.5 bg-beige-300 hover:bg-beige-400 cursor-pointer"
                   }`}
                   aria-label={`Jump to step ${idx + 1}`}
@@ -366,7 +513,8 @@ export const FeatureTour: React.FC<FeatureTourProps> = ({
             })}
           </div>
 
-          <div className="flex items-center gap-2">
+          {/* Action buttons */}
+          <div className="flex items-center gap-2 shrink-0">
             {currentStepIdx > 0 && (
               <button
                 onClick={handlePrev}
@@ -405,9 +553,9 @@ export const FeatureTour: React.FC<FeatureTourProps> = ({
                 onClick={handleNext}
                 className="console-glow-button flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-mono font-bold text-white cursor-pointer shadow-xs"
               >
-                {currentStepIdx === TOUR_STEPS.length - 1 ? (
+                {currentStepIdx === steps.length - 1 ? (
                   <>
-                    <span>Done</span>
+                    <span>Finish Tour</span>
                     <Check className="w-3.5 h-3.5" />
                   </>
                 ) : (

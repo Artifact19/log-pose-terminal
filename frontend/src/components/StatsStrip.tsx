@@ -11,7 +11,7 @@ export const StatsStrip: React.FC<StatsStripProps> = ({ stats }) => {
   const isCovHealthy = cov80 >= 70 && cov80 <= 90;
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <div data-tour="ledger-stats" className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
       {/* 1. Average Forecast Error */}
       <div
         className="bg-beige-50 rounded-3xl border border-beige-300 p-4 sm:p-5 shadow-tactile-card flex items-center gap-3.5 transition-transform hover:-translate-y-0.5"

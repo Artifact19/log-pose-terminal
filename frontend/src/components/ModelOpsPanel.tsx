@@ -29,7 +29,7 @@ export const ModelOpsPanel: React.FC<ModelOpsPanelProps> = ({
   return (
     <div className="space-y-6">
       {/* 1. Active Model Overview Card */}
-      <div className="bg-clay-card rounded-3xl border border-clay-border p-6 shadow-tactile-card">
+      <div data-tour="model-overview" className="bg-clay-card rounded-3xl border border-clay-border p-6 shadow-tactile-card">
         <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-beige-300 mb-5 gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
@@ -46,7 +46,7 @@ export const ModelOpsPanel: React.FC<ModelOpsPanelProps> = ({
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3">
+          <div data-tour="model-retrain-controls" className="flex flex-col sm:flex-row items-end sm:items-center gap-3">
             <label className="flex items-center gap-2 text-xs font-mono text-ink-secondary cursor-pointer select-none">
               <input
                 type="checkbox"
@@ -175,7 +175,7 @@ export const ModelOpsPanel: React.FC<ModelOpsPanelProps> = ({
 
         {/* Active Model Metrics Grid */}
         {activeModel ? (
-          <div>
+          <div data-tour="model-metrics">
             <div className="text-xs font-semibold text-ink-secondary mb-2.5">
               Backtested Performance Metrics (Historical Simulation):
             </div>
@@ -236,7 +236,7 @@ export const ModelOpsPanel: React.FC<ModelOpsPanelProps> = ({
       </div>
 
       {/* 2. Model History Log */}
-      <div className="bg-clay-card rounded-3xl border border-clay-border p-6 shadow-tactile-card">
+      <div data-tour="model-history" className="bg-clay-card rounded-3xl border border-clay-border p-6 shadow-tactile-card">
         <div className="flex items-center gap-2 mb-4 pb-3 border-b border-beige-300">
           <GitBranch className="w-4 h-4 text-terracotta-500" />
           <h3 className="text-sm font-bold text-ink-primary font-mono tracking-tight">

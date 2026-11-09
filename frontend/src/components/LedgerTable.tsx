@@ -34,7 +34,7 @@ export const LedgerTable: React.FC<LedgerTableProps> = ({
   return (
     <div className="bg-clay-card rounded-3xl border border-clay-border p-6 shadow-tactile-card">
       {/* Top Filter and Check Actuals Toolbar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-5 pb-4 border-b border-beige-300">
+      <div data-tour="ledger-filters" className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-5 pb-4 border-b border-beige-300">
         <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
           <div className="flex items-center gap-1.5 text-xs text-ink-muted">
             <Filter className="w-4 h-4 text-ink-muted" />
@@ -78,7 +78,7 @@ export const LedgerTable: React.FC<LedgerTableProps> = ({
           No forecasts found matching the selected filters.
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-2xl bg-beige-100/40 border border-beige-200/90 shadow-inner p-1">
+        <div data-tour="ledger-table" className="overflow-x-auto rounded-2xl bg-beige-100/40 border border-beige-200/90 shadow-inner p-1">
           <table className="w-full text-left border-collapse text-xs font-mono">
             <thead>
               <tr className="border-b border-beige-300 text-[11px] text-ink-muted uppercase tracking-wider">

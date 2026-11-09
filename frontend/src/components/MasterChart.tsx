@@ -177,7 +177,7 @@ export const MasterChart: React.FC<MasterChartProps> = ({
 
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           {/* Chart mode toggle (Sunken Tactile Well) */}
-          <div className="flex items-center bg-beige-200/70 p-1 rounded-2xl border border-beige-300 shadow-tactile-well text-xs">
+          <div data-tour="chart-type-toggle" className="flex items-center bg-beige-200/70 p-1 rounded-2xl border border-beige-300 shadow-tactile-well text-xs">
             <button
               onClick={() => setChartType("candlestick")}
               className={`flex items-center gap-1.5 px-3 py-1 rounded-xl font-medium transition-all cursor-pointer ${
@@ -204,6 +204,7 @@ export const MasterChart: React.FC<MasterChartProps> = ({
 
           {/* Past Forecasts toggle */}
           <button
+            data-tour="ghost-forecasts-toggle"
             onClick={() => setShowGhosts(!showGhosts)}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-mono font-medium transition-all cursor-pointer ${
               showGhosts
