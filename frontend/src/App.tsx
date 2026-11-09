@@ -99,6 +99,7 @@ function TerminalApp() {
   const {
     data: sentimentData,
     isLoading: sentimentLoading,
+    isFetching: sentimentFetching,
     refetch: refetchSentiment,
   } = useQuery({
     queryKey: ["sentiment", currentTicker],
@@ -265,6 +266,7 @@ function TerminalApp() {
                     <SentimentPulsePanel
                       sentiment={sentimentData || null}
                       isLoading={sentimentLoading}
+                      isFetching={sentimentFetching}
                       onRefresh={() => refetchSentiment()}
                       ticker={currentTicker || "AAPL"}
                       directionalAccuracy={activeModel?.directional_accuracy}
@@ -298,6 +300,7 @@ function TerminalApp() {
                     <SentimentPulsePanel
                       sentiment={sentimentData || null}
                       isLoading={sentimentLoading}
+                      isFetching={sentimentFetching}
                       onRefresh={() => refetchSentiment()}
                       ticker={currentTicker || "AAPL"}
                       directionalAccuracy={activeModel?.directional_accuracy}
