@@ -79,7 +79,7 @@ export const TickerBar: React.FC<TickerBarProps> = ({
         </div>
 
         {/* Controls: Horizon + Freshness + Run Button */}
-        <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-end">
+        <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 w-full lg:w-auto justify-start sm:justify-end">
           {/* Data freshness pill */}
           {lastBarDate && (() => {
             const mkt = getMarketInfo(currentTicker);
@@ -119,12 +119,12 @@ export const TickerBar: React.FC<TickerBarProps> = ({
             ))}
           </div>
 
-          {/* Glowing Luminous Console Action Button */}
+          {/* Glowing Luminous Console Action Button (Full width on mobile, auto on sm+) */}
           <button
             data-tour="run-forecast"
             onClick={onRunForecast}
             disabled={isLoading}
-            className="console-glow-button flex items-center gap-2 px-6 py-2.5 rounded-2xl text-white font-sans font-bold text-xs tracking-wide cursor-pointer disabled:opacity-75 transition-all"
+            className="console-glow-button w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 rounded-2xl text-white font-sans font-bold text-xs tracking-wide cursor-pointer disabled:opacity-75 transition-all"
           >
             {isLoading ? (
               <>

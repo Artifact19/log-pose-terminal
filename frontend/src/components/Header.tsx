@@ -16,75 +16,156 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, health,
 
   return (
     <>
-      <header className="bg-beige-50/95 backdrop-blur-md border-b border-beige-300 px-3 sm:px-6 py-2.5 sm:py-3 shadow-clay-sm sticky top-0 z-30 transition-colors">
-        <div className="w-full max-w-[1600px] mx-auto flex items-center justify-between gap-2 sm:gap-4 lg:gap-6 flex-nowrap">
-          {/* 1. Logo & Brand Identity */}
-          <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
-            <div className="relative group shrink-0">
-              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl overflow-hidden border border-white/80 shadow-tactile-knob bg-beige-100 flex items-center justify-center transition-transform group-hover:scale-105">
-                <img
-                  src="/cat-logo.jpg"
-                  alt="Log Pose Logo"
-                  className="w-full h-full object-cover"
-                />
+      <header className="bg-beige-50/95 backdrop-blur-md border-b border-beige-300 px-3 sm:px-6 py-2 sm:py-2.5 lg:py-3 shadow-clay-sm sticky top-0 z-30 transition-colors">
+        <div className="w-full max-w-[1600px] mx-auto flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2.5 lg:gap-4">
+          {/* Top Bar on Mobile / Left & Right on Desktop */}
+          <div className="flex items-center justify-between w-full lg:w-auto gap-2 sm:gap-4">
+            {/* 1. Logo & Brand Identity */}
+            <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
+              <div className="relative group shrink-0">
+                <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-2xl overflow-hidden border border-white/80 shadow-tactile-knob bg-beige-100 flex items-center justify-center transition-transform group-hover:scale-105">
+                  <img
+                    src="/cat-logo.jpg"
+                    alt="Log Pose Logo"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-market-up rounded-full border-2 border-beige-50 shadow-xs" title="Terminal Live" />
               </div>
-              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-market-up rounded-full border-2 border-beige-50 shadow-xs" title="Terminal Live" />
+
+              <div className="shrink-0">
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <span className="text-base sm:text-lg font-bold tracking-tight text-ink-primary font-sans whitespace-nowrap">
+                    Log Pose <span className="text-terracotta-500 font-extrabold">Terminal</span>
+                  </span>
+                  <span className="px-1.5 py-0.2 sm:py-0.5 text-[9px] sm:text-[10px] font-mono font-semibold uppercase tracking-wider rounded-lg bg-beige-200/70 text-ink-secondary border border-beige-300/80 shadow-2xs whitespace-nowrap">
+                    v2.0
+                  </span>
+                </div>
+                <p className="hidden xl:block text-[11px] text-ink-muted whitespace-nowrap">Stock Forecasting Terminal</p>
+              </div>
             </div>
 
-            <div className="shrink-0">
-              <div className="flex items-center gap-2">
-                <span className="text-base sm:text-lg font-bold tracking-tight text-ink-primary font-sans whitespace-nowrap">
-                  Log Pose <span className="text-terracotta-500 font-extrabold">Terminal</span>
-                </span>
-                <span className="hidden sm:inline-block px-1.5 py-0.5 text-[9px] sm:text-[10px] font-mono font-semibold uppercase tracking-wider rounded-lg bg-beige-200/70 text-ink-secondary border border-beige-300/80 shadow-2xs whitespace-nowrap">
-                  v2.0
-                </span>
+            {/* Mobile Actions Toolbar (Right side of row 1 on mobile) */}
+            <div className="flex lg:hidden items-center gap-1.5 sm:gap-2 shrink-0">
+              {/* Quick Tour Button (Mobile) */}
+              {onOpenTour && (
+                <button
+                  onClick={onOpenTour}
+                  className="tactile-pill flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-mono font-medium text-ink-primary hover:text-terracotta-600 transition-all cursor-pointer shadow-2xs shrink-0"
+                  title="Start Interactive Feature Tour"
+                >
+                  <HelpCircle className="w-3 h-3 text-terracotta-500 shrink-0" />
+                  <span className="hidden sm:inline">Tour</span>
+                </button>
+              )}
+
+              {/* AI Engine Status Badge (Mobile) */}
+              <div
+                className={`flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-medium border shadow-2xs shrink-0 whitespace-nowrap ${
+                  health?.ml_exports_in_sync
+                    ? "bg-emerald-50 text-emerald-800 border-emerald-200/80"
+                    : "bg-amber-50 text-amber-800 border-amber-200/80"
+                }`}
+                title="Forecasting algorithms and feature pipelines are verified and synchronized."
+              >
+                {health?.ml_exports_in_sync ? (
+                  <>
+                    <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
+                    <span className="hidden sm:inline">Verified</span>
+                  </>
+                ) : (
+                  <>
+                    <AlertTriangle className="w-3 h-3 text-amber-600 shrink-0" />
+                    <span className="hidden sm:inline">Sync</span>
+                  </>
+                )}
               </div>
-              <p className="hidden xl:block text-[11px] text-ink-muted whitespace-nowrap">Stock Forecasting Terminal</p>
+
+              {/* User Profile / Sign In Pill (Mobile) */}
+              {user ? (
+                <div className="flex items-center gap-1.5 bg-beige-200/80 pl-1 pr-2 py-0.5 rounded-full border border-beige-300 shadow-2xs font-mono text-[11px] shrink-0">
+                  <div
+                    className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[9px] text-white shrink-0 ${
+                      isAdmin
+                        ? "bg-gradient-to-tr from-terracotta-600 to-terracotta-400"
+                        : "bg-ink-secondary"
+                    }`}
+                  >
+                    {isAdmin ? <Shield className="w-3 h-3" /> : user.email.slice(0, 2).toUpperCase()}
+                  </div>
+                  <span className="font-semibold text-ink-primary max-w-[70px] sm:max-w-[100px] truncate" title={user.email}>
+                    {user.email.split("@")[0]}
+                  </span>
+                  <button
+                    onClick={signOut}
+                    className="p-0.5 text-ink-muted hover:text-terracotta-600 rounded-md transition-colors cursor-pointer"
+                    title="Sign Out"
+                  >
+                    <LogOut className="w-3 h-3" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={openAuthModal}
+                  className="tactile-pill flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-mono font-medium text-ink-primary hover:text-terracotta-600 transition-all cursor-pointer shadow-2xs shrink-0"
+                >
+                  <User className="w-3 h-3 text-terracotta-500 shrink-0" />
+                  <span>Sign In</span>
+                </button>
+              )}
+
+              <button
+                onClick={() => setShowDisclaimer(true)}
+                className="p-1 text-ink-muted hover:text-ink-primary rounded-lg transition-colors cursor-pointer"
+                title="Important Disclaimer"
+              >
+                <Info className="w-3.5 h-3.5" />
+              </button>
             </div>
           </div>
 
-          {/* 2. Navigation Switcher (Tactile Recessed Well with Extruded Buttons) */}
-          <nav data-tour="nav-tabs" className="flex items-center bg-beige-200/70 p-1 rounded-2xl border border-beige-300/90 shadow-tactile-well shrink-0">
+          {/* 2. Navigation Switcher (Tabs: Centered and responsive on mobile, inline on desktop) */}
+          <nav data-tour="nav-tabs" className="flex items-center justify-center bg-beige-200/70 p-1 rounded-2xl border border-beige-300/90 shadow-tactile-well w-full lg:w-auto shrink-0">
             <button
               onClick={() => setActiveTab("terminal")}
-              className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
+              className={`flex-1 lg:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
                 activeTab === "terminal"
                   ? "bg-white text-terracotta-600 shadow-tactile-btn border-t border-white border-b-2 border-beige-300"
                   : "text-ink-secondary hover:text-ink-primary hover:bg-beige-100/50"
               }`}
             >
               <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
-              <span>Forecast Terminal</span>
+              <span>Forecast<span className="hidden sm:inline"> Terminal</span></span>
             </button>
 
             <button
               onClick={() => setActiveTab("ledger")}
-              className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
+              className={`flex-1 lg:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
                 activeTab === "ledger"
                   ? "bg-white text-terracotta-600 shadow-tactile-btn border-t border-white border-b-2 border-beige-300"
                   : "text-ink-secondary hover:text-ink-primary hover:bg-beige-100/50"
               }`}
             >
               <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
-              <span>Track Record & History</span>
+              <span>Track Record<span className="hidden sm:inline"> & History</span></span>
             </button>
 
             <button
               onClick={() => setActiveTab("models")}
-              className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
+              className={`flex-1 lg:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
                 activeTab === "models"
                   ? "bg-white text-terracotta-600 shadow-tactile-btn border-t border-white border-b-2 border-beige-300"
                   : "text-ink-secondary hover:text-ink-primary hover:bg-beige-100/50"
               }`}
             >
               <Cpu className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
-              <span>AI Model Status</span>
+              <span>AI Models<span className="hidden sm:inline"> Status</span></span>
             </button>
           </nav>
 
-          {/* 3. System Status, User Profile & Disclaimer */}
-          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 whitespace-nowrap">
+          {/* 3. Desktop-Only Controls (Tour, AI Engine, Profile, Disclaimer) */}
+          <div className="hidden lg:flex items-center gap-2 sm:gap-2.5 shrink-0 whitespace-nowrap">
             {/* Quick Tour Button */}
             {onOpenTour && (
               <button

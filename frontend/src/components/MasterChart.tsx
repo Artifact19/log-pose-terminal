@@ -165,17 +165,17 @@ export const MasterChart: React.FC<MasterChartProps> = ({
   return (
     <div data-tour="master-chart" className="bg-beige-50 rounded-3xl border border-beige-300 p-5 shadow-tactile-card">
       {/* Top Chart Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b border-beige-200">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-beige-200">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="text-base font-bold text-ink-primary font-sans tracking-tight">
             {run.ticker} Price & Forecast Trajectory
           </span>
           <span className="text-xs px-2.5 py-0.5 rounded-lg bg-beige-200/70 font-mono text-ink-secondary border border-beige-300 shadow-2xs">
-            Baseline Price: ${run.anchor_close_price.toFixed(2)}
+            Base: ${run.anchor_close_price.toFixed(2)}
           </span>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           {/* Chart mode toggle (Sunken Tactile Well) */}
           <div className="flex items-center bg-beige-200/70 p-1 rounded-2xl border border-beige-300 shadow-tactile-well text-xs">
             <button
@@ -213,13 +213,13 @@ export const MasterChart: React.FC<MasterChartProps> = ({
             title="Toggle previous historical forecasts to inspect accuracy over time"
           >
             {showGhosts ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-            Past Forecasts ({ghostCount})
+            Past ({ghostCount})
           </button>
         </div>
       </div>
 
       {/* Plotly Chart Canvas */}
-      <div className="w-full h-[450px] rounded-2xl overflow-hidden bg-[#FAF7F2] border border-beige-200/70 shadow-tactile-well p-1">
+      <div className="w-full h-[360px] sm:h-[450px] rounded-2xl overflow-hidden bg-[#FAF7F2] border border-beige-200/70 shadow-tactile-well p-1">
         <Plot
           data={traces}
           layout={{
