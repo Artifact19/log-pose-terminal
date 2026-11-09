@@ -21,7 +21,23 @@ export const MasterChart: React.FC<MasterChartProps> = ({
   const [chartType, setChartType] = useState<"candlestick" | "line">("candlestick");
 
   // Prepare History data (last 120 bars)
-  const displayBars = historyBars.slice(-120);
+  const displayBars = [...historyBars.slice(-120)];
+
+  // Explicitly bridge the last historical bar to the forecast anchor date & price
+  // to ensure mathematical and visual continuity with 0 gap
+  if (displayBars.length > 0 && run) {
+    const lastIdx = displayBars.length - 1;
+    const anchorPrice = run.anchor_close_price;
+    const currentOpen = displayBars[lastIdx].open;
+    displayBars[lastIdx] = {
+      ...displayBars[lastIdx],
+      date: run.anchor_date,
+      close: anchorPrice,
+      high: Math.max(displayBars[lastIdx].high, anchorPrice, currentOpen),
+      low: Math.min(displayBars[lastIdx].low, anchorPrice, currentOpen),
+    };
+  }
+
   const histDates = displayBars.map((b) => b.date);
   const histOpens = displayBars.map((b) => b.open);
   const histHighs = displayBars.map((b) => b.high);
