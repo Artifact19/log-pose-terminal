@@ -16,6 +16,17 @@ const BASE_PRICES: Record<string, number> = {
   "TCS.NS": 4125.0,
 };
 
+function generateUUID(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 function getBasePrice(ticker: string): number {
   return BASE_PRICES[ticker.toUpperCase()] || 150.0;
 }
@@ -115,7 +126,7 @@ export function generateMockForecast(
   }
 
   return {
-    id: `run-${t}-${Date.now()}`,
+    id: generateUUID(),
     ticker: t,
     model_version_id: 1,
     created_at: new Date().toISOString(),

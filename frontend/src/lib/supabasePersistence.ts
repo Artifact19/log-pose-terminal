@@ -123,20 +123,34 @@ export async function fetchLedgerRunsFromSupabase(ticker?: string): Promise<Fore
     }
   }
 
-  // Fallback to localStorage cache
+  // Fallback to localStorage cache (with automatic stale run cleanup)
   try {
+    const isObsolete = (run: any) => !run?.anchor_date || run.anchor_date < "2026-11-01";
+
     if (ticker) {
-      const single = localStorage.getItem(`logpose_saved_run_${ticker.toUpperCase()}`);
-      if (single) return [JSON.parse(single)];
+      const key = `logpose_saved_run_${ticker.toUpperCase()}`;
+      const single = localStorage.getItem(key);
+      if (single) {
+        const parsed = JSON.parse(single);
+        if (isObsolete(parsed)) {
+          localStorage.removeItem(key);
+        } else {
+          return [parsed];
+        }
+      }
     }
     const all = localStorage.getItem("logpose_all_saved_runs");
     if (all) {
       const parsed = JSON.parse(all);
+      const valid = parsed.filter((r: ForecastRunDetail) => !isObsolete(r));
+      if (valid.length !== parsed.length) {
+        localStorage.setItem("logpose_all_saved_runs", JSON.stringify(valid));
+      }
       if (ticker) {
-        const filtered = parsed.filter((r: ForecastRunDetail) => r.ticker === ticker.toUpperCase());
+        const filtered = valid.filter((r: ForecastRunDetail) => r.ticker === ticker.toUpperCase());
         if (filtered.length > 0) return filtered;
-      } else if (parsed.length > 0) {
-        return parsed;
+      } else if (valid.length > 0) {
+        return valid;
       }
     }
   } catch {}
