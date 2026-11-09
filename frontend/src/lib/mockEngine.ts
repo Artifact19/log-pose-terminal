@@ -202,25 +202,99 @@ export function generateMockForecast(
   };
 }
 
+const TICKER_MODEL_SPECS: Record<string, any> = {
+  AAPL: {
+    version_tag: "v20261103T152419Z",
+    walk_forward_mae: 2.27,
+    walk_forward_rmse: 0.032,
+    directional_accuracy: 0.549,
+    empirical_coverage_80: 0.788,
+    empirical_coverage_95: 0.952,
+    mpiw_80_atr: 0.066,
+    notebook_hash: "396a56746d11cddf5f108309e80d6594",
+  },
+  NVDA: {
+    version_tag: "v20261104T103543Z",
+    walk_forward_mae: 6.08,
+    walk_forward_rmse: 0.078,
+    directional_accuracy: 0.558,
+    empirical_coverage_80: 0.789,
+    empirical_coverage_95: 0.937,
+    mpiw_80_atr: 0.177,
+    notebook_hash: "4f8a9b1c2d3e5f6a7b8c9d0e1f2a3b4c",
+  },
+  MSFT: {
+    version_tag: "v20261103T153210Z",
+    walk_forward_mae: 1.96,
+    walk_forward_rmse: 0.027,
+    directional_accuracy: 0.534,
+    empirical_coverage_80: 0.801,
+    empirical_coverage_95: 0.949,
+    mpiw_80_atr: 0.058,
+    notebook_hash: "7b2c4d6e8f0a1b3c5e7a9b1d3f5a7c9e",
+  },
+  SPY: {
+    version_tag: "v20261103T151456Z",
+    walk_forward_mae: 1.23,
+    walk_forward_rmse: 0.018,
+    directional_accuracy: 0.490,
+    empirical_coverage_80: 0.799,
+    empirical_coverage_95: 0.955,
+    mpiw_80_atr: 0.034,
+    notebook_hash: "1c3e5a7b9d2f4e6a8b0c2d4e6f8a0b2d",
+  },
+  "RELIANCE.NS": {
+    version_tag: "v20261103T151813Z",
+    walk_forward_mae: 1.84,
+    walk_forward_rmse: 0.025,
+    directional_accuracy: 0.489,
+    empirical_coverage_80: 0.798,
+    empirical_coverage_95: 0.948,
+    mpiw_80_atr: 0.055,
+    notebook_hash: "9e1f3a5b7c8d2e4f0a1b3c5d7e9f1a3b",
+  },
+  "TCS.NS": {
+    version_tag: "v20261103T152945Z",
+    walk_forward_mae: 1.62,
+    walk_forward_rmse: 0.022,
+    directional_accuracy: 0.518,
+    empirical_coverage_80: 0.804,
+    empirical_coverage_95: 0.952,
+    mpiw_80_atr: 0.048,
+    notebook_hash: "2a4c6e8f0b1d3f5a7c9e1b3d5f7a9c1e",
+  },
+};
+
 export function generateMockActiveModel(ticker: string): ModelVersion {
   const t = ticker.toUpperCase();
+  const spec = TICKER_MODEL_SPECS[t] || {
+    version_tag: "v20261108T180000Z",
+    walk_forward_mae: 2.14,
+    walk_forward_rmse: 0.031,
+    directional_accuracy: 0.528,
+    empirical_coverage_80: 0.795,
+    empirical_coverage_95: 0.951,
+    mpiw_80_atr: 0.068,
+    notebook_hash: "a4f8d93e1b2c45d6e7f8a9b0c1d2e3f4",
+  };
+
   const nowStr = toLocalDateStr(new Date());
   return {
     id: 1,
     ticker: t,
-    version_tag: "v20261108T180000Z",
+    version_tag: spec.version_tag,
     methodology_name: "XGBoostDirectMultiHorizon",
     trained_at: new Date().toISOString(),
     train_start_date: "2019-01-01",
     train_end_date: nowStr,
     horizon_days: 20,
-    walk_forward_mae: 2.14,
-    walk_forward_rmse: 0.031,
-    directional_accuracy: 0.562,
-    empirical_coverage_80: 0.795,
-    empirical_coverage_95: 0.951,
-    mpiw_80_atr: 0.068,
-    notebook_hash: "a4f8d93e1b2c45d6e7f8a9b0c1d2e3f4",
+    walk_forward_mae: spec.walk_forward_mae,
+    walk_forward_rmse: spec.walk_forward_rmse,
+    directional_accuracy: spec.directional_accuracy,
+    empirical_coverage_80: spec.empirical_coverage_80,
+    empirical_coverage_95: spec.empirical_coverage_95,
+    mpiw_80_atr: spec.mpiw_80_atr,
+    notebook_hash: spec.notebook_hash,
     artifact_path: `./artifacts/${t}/bundle.joblib`,
     is_active: true,
   };
@@ -228,26 +302,36 @@ export function generateMockActiveModel(ticker: string): ModelVersion {
 
 export function generateMockRetrainDiff(ticker: string): any {
   const t = ticker.toUpperCase();
+  const spec = TICKER_MODEL_SPECS[t] || {
+    version_tag: "v20261103T150000Z",
+    walk_forward_mae: 2.14,
+    directional_accuracy: 0.528,
+    empirical_coverage_80: 0.771,
+  };
   const now = new Date();
   const vTag = `v${now.toISOString().replace(/[^\d]/g, "").slice(0, 14)}Z`;
+  const improvedMae = Number((spec.walk_forward_mae * 0.91).toFixed(2));
+  const improvedAcc = Number(Math.min(0.62, spec.directional_accuracy + 0.024).toFixed(3));
+  const improvedCov = Number(Math.min(0.825, spec.empirical_coverage_80 + 0.015).toFixed(3));
+
   return {
     job_id: `job-${Date.now()}`,
     ticker: t,
     retrained: true,
     activated: true,
     activation_reason:
-      "Walk-forward validation achieved lower MAE and satisfied empirical coverage constraints (>0.65).",
+      `Walk-forward validation achieved lower MAE (${improvedMae}% vs ${spec.walk_forward_mae}%) and satisfied empirical coverage constraints (>0.65).`,
     old: {
-      version_tag: "v20261103T150000Z",
-      walk_forward_mae: 2.14,
-      directional_accuracy: 0.528,
-      empirical_coverage_80: 0.771,
+      version_tag: spec.version_tag,
+      walk_forward_mae: spec.walk_forward_mae,
+      directional_accuracy: spec.directional_accuracy,
+      empirical_coverage_80: spec.empirical_coverage_80,
     },
     new: {
       version_tag: vTag,
-      walk_forward_mae: 1.82,
-      directional_accuracy: 0.564,
-      empirical_coverage_80: 0.812,
+      walk_forward_mae: improvedMae,
+      directional_accuracy: improvedAcc,
+      empirical_coverage_80: improvedCov,
     },
   };
 }

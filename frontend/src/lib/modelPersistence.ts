@@ -9,6 +9,12 @@ export function getStoredModels(ticker: string): ModelVersion[] {
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) {
+        // Automatically upgrade any legacy placeholder model that had the shared 2.14 MAE
+        if (parsed.length === 1 && parsed[0].version_tag === "v20261108T180000Z") {
+          const updatedInitial = generateMockActiveModel(t);
+          localStorage.setItem(key, JSON.stringify([updatedInitial]));
+          return [updatedInitial];
+        }
         return parsed;
       }
     }

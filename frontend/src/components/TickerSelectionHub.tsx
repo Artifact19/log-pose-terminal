@@ -364,3 +364,4 @@ export const TickerSelectionHub: React.FC<TickerSelectionHubProps> = ({
     </div>
   );
 };
+
