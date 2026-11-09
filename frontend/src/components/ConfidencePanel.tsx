@@ -61,9 +61,10 @@ export const ConfidencePanel: React.FC<ConfidencePanelProps> = ({ run }) => {
             <div className="flex justify-between items-center text-xs mb-1.5">
               <span className="text-ink-secondary flex items-center gap-1 font-medium">
                 Trend Accuracy (30%)
-                <span title="How reliably historical model forecasts identified upward vs downward direction">
+                <span title="How reliably historical model forecasts identified upward vs downward direction (vs 50% Random Walk Baseline)">
                   <HelpCircle className="w-3.5 h-3.5 text-ink-muted cursor-help" />
                 </span>
+                <span className="text-[10px] text-ink-muted hidden sm:inline">(vs 50% baseline)</span>
               </span>
               <span className="font-mono font-bold text-ink-primary">
                 {meta.directional_accuracy !== undefined

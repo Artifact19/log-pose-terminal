@@ -180,25 +180,28 @@ export const ModelOpsPanel: React.FC<ModelOpsPanelProps> = ({
               Backtested Performance Metrics (Historical Simulation):
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 font-mono text-xs">
-              <div className="bg-beige-100/60 p-3 rounded-xl border border-beige-200 shadow-xs" title="Average percentage error across backtested historical forecasts">
+              <div className="bg-beige-100/60 p-3 rounded-xl border border-beige-200 shadow-xs" title="Average percentage error across backtested historical forecasts (Benchmark: ~2.65% Persistence)">
                 <span className="text-[10px] text-ink-muted uppercase tracking-wider block">Average Error (MAE)</span>
                 <span className="text-base font-bold text-ink-primary mt-0.5 block">
                   {activeModel.walk_forward_mae.toFixed(2)}%
                 </span>
+                <span className="text-[10px] text-ink-muted block mt-0.5">vs 2.65% Persistence</span>
               </div>
 
-              <div className="bg-beige-100/60 p-3 rounded-xl border border-beige-200 shadow-xs" title="Percentage of times the model correctly anticipated whether the stock moved up or down">
+              <div className="bg-beige-100/60 p-3 rounded-xl border border-beige-200 shadow-xs" title="Percentage of times the model correctly anticipated whether the stock moved up or down (Benchmark: 50.0% Random Walk)">
                 <span className="text-[10px] text-ink-muted uppercase tracking-wider block">Trend Accuracy</span>
                 <span className="text-base font-bold text-ink-primary mt-0.5 block">
                   {(activeModel.directional_accuracy * 100).toFixed(1)}%
                 </span>
+                <span className="text-[10px] text-ink-muted block mt-0.5">vs 50% Random Walk</span>
               </div>
 
-              <div className="bg-beige-100/60 p-3 rounded-xl border border-beige-200 shadow-xs" title="Percentage of past prices that landed inside the 80% prediction range">
+              <div className="bg-beige-100/60 p-3 rounded-xl border border-beige-200 shadow-xs" title="Percentage of past prices that landed inside the 80% prediction range (Target: ~80% Conformal Calibration)">
                 <span className="text-[10px] text-ink-muted uppercase tracking-wider block">80% Range Accuracy</span>
                 <span className="text-base font-bold text-emerald-700 mt-0.5 block">
                   {(activeModel.empirical_coverage_80 * 100).toFixed(1)}%
                 </span>
+                <span className="text-[10px] text-ink-muted block mt-0.5">Target: ~80% CQR</span>
               </div>
 
               <div className="bg-beige-100/60 p-3 rounded-xl border border-beige-200 shadow-xs" title="Percentage of past prices that landed inside the 95% prediction range">
