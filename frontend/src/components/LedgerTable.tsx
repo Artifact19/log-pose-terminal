@@ -29,10 +29,20 @@ export const LedgerTable: React.FC<LedgerTableProps> = ({
     if (!confirm("Are you sure you want to clean all historical forecast runs and reset the ledger?")) return;
     setIsCleaning(true);
     try {
-      // 1. Try deleting from Supabase
+      // 1. Try deleting from Supabase (RLS can silently block deletes, so verify afterwards)
       if (isSupabaseConfigured && supabase) {
         await supabase.from("forecast_point").delete().neq("id", 0);
         await supabase.from("forecast_run").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+        const { count } = await supabase
+          .from("forecast_run")
+          .select("id", { count: "exact", head: true });
+        if (count && count > 0) {
+          alert(
+            `Supabase blocked the delete (${count} runs remain). Add the admin DELETE policy in the Supabase SQL Editor, sign out and back in, then try again.`
+          );
+          setIsCleaning(false);
+          return;
+        }
       }
       // 2. Clear all logpose client cache
       const keysToRemove: string[] = [];
