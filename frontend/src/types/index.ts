@@ -149,3 +149,26 @@ export interface RetrainStatus {
   error?: string;
 }
 
+export interface NewsSentimentArticle {
+  title: string;
+  link: string;
+  published_at: string;
+  publisher: string;
+  sentiment: "BULLISH" | "BEARISH" | "NEUTRAL";
+  score: number;
+}
+
+export interface SentimentResponse {
+  ticker: string;
+  score: number; // -1.0 to +1.0
+  label: "STRONGLY BULLISH" | "BULLISH" | "NEUTRAL" | "BEARISH" | "STRONGLY BEARISH";
+  drift_tilt_pct: number; // e.g. +1.2%
+  articles_analyzed: number;
+  bullish_count: number;
+  bearish_count: number;
+  neutral_count: number;
+  articles: NewsSentimentArticle[];
+  as_of: string;
+}
+
+

@@ -5,6 +5,14 @@
       "destination": "/api/bars?ticker=:ticker"
     },
     {
+      "source": "/api/sentiment/:ticker",
+      "destination": "/api/sentiment?ticker=:ticker"
+    },
+    {
+      "source": "/api/sentiment",
+      "destination": "/api/sentiment"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

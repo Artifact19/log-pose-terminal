@@ -7,6 +7,7 @@ import { TickerSelectionHub } from "./components/TickerSelectionHub";
 import { MasterChart } from "./components/MasterChart";
 import { ConfidencePanel } from "./components/ConfidencePanel";
 import { ForecastTable } from "./components/ForecastTable";
+import { SentimentPulsePanel } from "./components/SentimentPulsePanel";
 import { LedgerTable } from "./components/LedgerTable";
 import { StatsStrip } from "./components/StatsStrip";
 import { ModelOpsPanel } from "./components/ModelOpsPanel";
@@ -95,6 +96,17 @@ function TerminalApp() {
     enabled: !!currentTicker,
   });
 
+  const {
+    data: sentimentData,
+    isLoading: sentimentLoading,
+    refetch: refetchSentiment,
+  } = useQuery({
+    queryKey: ["sentiment", currentTicker],
+    queryFn: () => (currentTicker ? api.getSentiment(currentTicker) : Promise.resolve(null)),
+    enabled: !!currentTicker,
+    staleTime: 45000,
+  });
+
   // Active run: either user selected or latest run for ticker
   const activeRun =
     selectedRun && (!currentTicker || selectedRun.ticker === currentTicker)
@@ -107,7 +119,8 @@ function TerminalApp() {
   const forecastMutation = useMutation({
     mutationFn: () => {
       const t = currentTicker || "AAPL";
-      return api.createForecast(t, horizon, undefined, true);
+      const sentimentScore = sentimentData?.score;
+      return api.createForecast(t, horizon, undefined, true, sentimentScore);
     },
     onSuccess: (newRun) => {
       setCurrentTicker(newRun.ticker);
@@ -247,28 +260,48 @@ function TerminalApp() {
 
                     {/* Step Projection Table */}
                     <ForecastTable points={activeRun.points} ticker={activeRun.ticker} />
+
+                    {/* Market Pulse & NLP Sentiment Stream */}
+                    <SentimentPulsePanel
+                      sentiment={sentimentData || null}
+                      isLoading={sentimentLoading}
+                      onRefresh={() => refetchSentiment()}
+                      ticker={currentTicker || "AAPL"}
+                      directionalAccuracy={activeModel?.directional_accuracy}
+                    />
                   </>
                 ) : (
-                  <div className="bg-clay-card rounded-3xl border border-clay-border p-12 text-center shadow-tactile-card">
-                    <img
-                      src="/cat-logo.jpg"
-                      alt="Log Pose Logo"
-                      className="w-20 h-20 mx-auto rounded-3xl border-2 border-beige-300 shadow-tactile-knob mb-4 object-cover"
+                  <div className="space-y-6">
+                    <div className="bg-clay-card rounded-3xl border border-clay-border p-12 text-center shadow-tactile-card">
+                      <img
+                        src="/cat-logo.jpg"
+                        alt="Log Pose Logo"
+                        className="w-20 h-20 mx-auto rounded-3xl border-2 border-beige-300 shadow-tactile-knob mb-4 object-cover"
+                      />
+                      <h3 className="text-base font-bold text-ink-primary font-mono mb-1">
+                        Ready to Forecast {currentTicker}
+                      </h3>
+                      <p className="text-xs text-ink-secondary mb-5 max-w-md mx-auto">
+                        Click &ldquo;Generate Forecast&rdquo; above to project expected prices and statistical
+                        probability ranges for upcoming trading sessions.
+                      </p>
+                      <button
+                        onClick={() => forecastMutation.mutate()}
+                        disabled={forecastMutation.isPending}
+                        className="console-glow-button px-6 py-2.5 rounded-2xl text-white font-mono text-xs font-semibold cursor-pointer"
+                      >
+                        {forecastMutation.isPending ? "Generating..." : `Generate ${horizon}-Day Forecast`}
+                      </button>
+                    </div>
+
+                    {/* Show sentiment pulse even before first forecast generation */}
+                    <SentimentPulsePanel
+                      sentiment={sentimentData || null}
+                      isLoading={sentimentLoading}
+                      onRefresh={() => refetchSentiment()}
+                      ticker={currentTicker || "AAPL"}
+                      directionalAccuracy={activeModel?.directional_accuracy}
                     />
-                    <h3 className="text-base font-bold text-ink-primary font-mono mb-1">
-                      Ready to Forecast {currentTicker}
-                    </h3>
-                    <p className="text-xs text-ink-secondary mb-5 max-w-md mx-auto">
-                      Click &ldquo;Generate Forecast&rdquo; above to project expected prices and statistical
-                      probability ranges for upcoming trading sessions.
-                    </p>
-                    <button
-                      onClick={() => forecastMutation.mutate()}
-                      disabled={forecastMutation.isPending}
-                      className="console-glow-button px-6 py-2.5 rounded-2xl text-white font-mono text-xs font-semibold cursor-pointer"
-                    >
-                      {forecastMutation.isPending ? "Generating..." : `Generate ${horizon}-Day Forecast`}
-                    </button>
                   </div>
                 )}
               </div>

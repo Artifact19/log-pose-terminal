@@ -1,5 +1,5 @@
 import React from "react";
-import { AlertCircle, HelpCircle, ShieldAlert, Globe, Clock } from "lucide-react";
+import { AlertCircle, HelpCircle, ShieldAlert, Globe, Clock, Sparkles } from "lucide-react";
 import { ConfidenceGauge } from "./ConfidenceGauge";
 import { fmtPrice, getMarketInfo } from "../lib/fmt";
 import { useExchangeClock } from "../lib/useExchangeClock";
@@ -154,6 +154,32 @@ export const ConfidencePanel: React.FC<ConfidencePanelProps> = ({ run }) => {
             </div>
           </div>
         </div>
+
+        {/* NLP Sentiment Catalyst Tilt (Option A) */}
+        {meta.nlp_sentiment_score !== undefined && (
+          <div className="mt-4 p-2.5 rounded-2xl bg-beige-100/80 border border-beige-300 flex items-center justify-between text-xs font-mono shadow-2xs">
+            <span className="text-ink-secondary flex items-center gap-1.5 font-medium text-[11px]">
+              <Sparkles className="w-3.5 h-3.5 text-terracotta-500 shrink-0" />
+              NLP Catalyst Bias:
+            </span>
+            <span
+              className={`font-bold px-2 py-0.5 rounded-lg border text-[10px] ${
+                meta.nlp_sentiment_score > 0.12
+                  ? "bg-emerald-50 text-emerald-800 border-emerald-300"
+                  : meta.nlp_sentiment_score < -0.12
+                  ? "bg-terracotta-50 text-terracotta-800 border-terracotta-300"
+                  : "bg-beige-200 text-ink-secondary border-beige-300"
+              }`}
+            >
+              {meta.nlp_sentiment_score > 0
+                ? `+${meta.nlp_sentiment_score.toFixed(2)}`
+                : meta.nlp_sentiment_score.toFixed(2)}{" "}
+              {meta.nlp_drift_tilt
+                ? `(${meta.nlp_drift_tilt > 0 ? `+${meta.nlp_drift_tilt}%` : `${meta.nlp_drift_tilt}%`} Tilt)`
+                : ""}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Anchor Date, Market Exchange & Base Price Metadata */}

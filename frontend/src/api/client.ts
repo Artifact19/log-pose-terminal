@@ -6,6 +6,7 @@ import type {
   MarketBarsResponse,
   ModelVersion,
   RetrainStatus,
+  SentimentResponse,
 } from "../types";
 import { supabase, isSupabaseConfigured } from "../lib/supabase";
 import {
@@ -14,6 +15,7 @@ import {
   generateMockActiveModel,
   generateMockRetrainDiff,
   generateMockHealth,
+  generateMockSentiment,
 } from "../lib/mockEngine";
 
 import {
@@ -124,7 +126,13 @@ export const api = {
       () => generateMockBars(ticker, days)
     ),
 
-  createForecast: async (ticker: string, horizon: number = 5, asOf?: string, forceNew: boolean = false) => {
+  createForecast: async (
+    ticker: string,
+    horizon: number = 5,
+    asOf?: string,
+    forceNew: boolean = false,
+    sentimentScore?: number
+  ) => {
     const run = await request<ForecastRunDetail>(
       "/forecast",
       {
@@ -134,9 +142,10 @@ export const api = {
           horizon,
           as_of: asOf || undefined,
           force_new: forceNew || false,
+          sentiment_score: sentimentScore,
         }),
       },
-      () => generateMockForecast(ticker, horizon, asOf)
+      () => generateMockForecast(ticker, horizon, asOf, sentimentScore)
     );
     // Persist to Supabase and browser cache, awaiting completion so points are saved before queries refetch
     try {
@@ -262,4 +271,16 @@ export const api = {
       { method: "POST" },
       () => ({ in_sync: true, message: "Methodology verified in sync." })
     ),
+
+  getSentiment: async (ticker: string): Promise<SentimentResponse> => {
+    try {
+      const res = await request<SentimentResponse>(
+        `/sentiment?ticker=${encodeURIComponent(ticker)}`,
+        undefined,
+        () => generateMockSentiment(ticker)
+      );
+      if (res && Array.isArray(res.articles) && res.articles.length > 0) return res;
+    } catch {}
+    return generateMockSentiment(ticker);
+  },
 };

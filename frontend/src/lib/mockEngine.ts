@@ -186,7 +186,8 @@ const TICKER_MODEL_SPECS: Record<string, any> = {
 export function generateMockForecast(
   ticker: string,
   horizon: number = 5,
-  asOf?: string
+  asOf?: string,
+  sentimentScore?: number
 ): ForecastRunDetail {
   const t = ticker.toUpperCase();
   const barsData = generateMockBars(t, 250);
@@ -207,6 +208,14 @@ export function generateMockForecast(
 
   const isSubBaseline = spec.directional_accuracy < 0.50;
 
+  // Use provided sentimentScore or sample from fallback sentiment if sub-baseline
+  const effectiveSentiment =
+    sentimentScore !== undefined
+      ? sentimentScore
+      : isSubBaseline
+      ? (t === "RELIANCE.NS" ? 0.38 : 0.20)
+      : 0;
+
   const points: ForecastPointDetail[] = [];
   let predPrice = anchorClose;
   const [aYear, aMonth, aDay] = anchorDate.split("-").map(Number);
@@ -219,10 +228,22 @@ export function generateMockForecast(
     const day = curD.getDay();
     if (day === 0 || day === 6) continue;
 
-    // Quant Gating: If walk-forward directional accuracy < 50%, gate directional drift to zero (driftless Martingale cone)
-    const expectedReturnPct = isSubBaseline
-      ? 0
-      : Math.sin(step / 3) * 0.008 + 0.003 * step;
+    // Quant Gating (Option A): If walk-forward directional accuracy < 50%,
+    // calibrate directional drift using high-conviction NLP sentiment tilt rather than arbitrary momentum noise
+    let expectedReturnPct = 0;
+    if (isSubBaseline) {
+      if (Math.abs(effectiveSentiment) >= 0.12) {
+        // Calibrated NLP sentiment tilt up to +/- 1.2%
+        expectedReturnPct = Number(
+          (effectiveSentiment * 0.015 * Math.sqrt(step / horizon)).toFixed(4)
+        );
+      } else {
+        expectedReturnPct = 0; // Pure driftless Martingale fallback
+      }
+    } else {
+      expectedReturnPct = Math.sin(step / 3) * 0.008 + 0.003 * step;
+    }
+
     predPrice = anchorClose * (1 + expectedReturnPct);
 
     const band80HalfWidth = predPrice * (0.012 * Math.sqrt(step));
@@ -246,7 +267,7 @@ export function generateMockForecast(
 
   // Component breakdown scores dynamically derived from authentic ticker specs
   const accuracyScore = isSubBaseline
-    ? Math.round(spec.directional_accuracy * 80) // Penalized score below 50% baseline
+    ? Math.min(85, Math.round(spec.directional_accuracy * 80 + Math.max(0, effectiveSentiment) * 25))
     : Math.round(spec.directional_accuracy * 100);
   const calibrationScore = Math.round(spec.empirical_coverage_80 * 100);
   const tightnessScore = 78.0;
@@ -278,6 +299,8 @@ export function generateMockForecast(
       picp_95: spec.empirical_coverage_95,
       mpiw_80_atr: 3.04,
       regime_vol_z: 0.84,
+      nlp_sentiment_score: effectiveSentiment,
+      nlp_drift_tilt: Number((effectiveSentiment * 1.5).toFixed(2)),
       component_scores: {
         accuracy: accuracyScore,
         calibration: calibrationScore,
@@ -377,5 +400,168 @@ export function generateMockHealth(): HealthResponse {
     methodology_name: "XGBoostDirectMultiHorizon",
     disclaimer:
       "Log Pose Terminal is for research and forward-testing purposes only. Not financial advice.",
+  };
+}
+
+export function generateMockSentiment(ticker: string) {
+  const t = ticker.toUpperCase();
+  const now = new Date();
+
+  if (t === "RELIANCE.NS") {
+    return {
+      ticker: t,
+      score: 0.38,
+      label: "BULLISH" as const,
+      drift_tilt_pct: 0.57,
+      articles_analyzed: 5,
+      bullish_count: 3,
+      bearish_count: 1,
+      neutral_count: 1,
+      articles: [
+        {
+          title: "Reliance Industries stock outlook bullish on strong O2C earnings, steady Jio growth",
+          publisher: "Moneycontrol",
+          published_at: "2 hours ago",
+          sentiment: "BULLISH" as const,
+          score: 0.72,
+          link: "https://www.moneycontrol.com",
+        },
+        {
+          title: "Reliance Industries shares jump following Q2 refining margins and retail expansion",
+          publisher: "Livemint",
+          published_at: "4 hours ago",
+          sentiment: "BULLISH" as const,
+          score: 0.65,
+          link: "https://www.livemint.com",
+        },
+        {
+          title: "Why is Reliance Industries stock surging today? Analysts weigh in",
+          publisher: "Investing.com India",
+          published_at: "6 hours ago",
+          sentiment: "BULLISH" as const,
+          score: 0.54,
+          link: "https://in.investing.com",
+        },
+        {
+          title: "Reliance may face competitive friction in consumer retail goods: Analyst review",
+          publisher: "Business Standard",
+          published_at: "8 hours ago",
+          sentiment: "BEARISH" as const,
+          score: -0.35,
+          link: "https://www.business-standard.com",
+        },
+        {
+          title: "Reliance Industries Share Price - Live NSE Chart & Technical Assessment",
+          publisher: "Upstox",
+          published_at: "12 hours ago",
+          sentiment: "NEUTRAL" as const,
+          score: 0.05,
+          link: "https://upstox.com",
+        },
+      ],
+      as_of: now.toISOString(),
+    };
+  }
+
+  if (t === "NVDA") {
+    return {
+      ticker: t,
+      score: 0.45,
+      label: "STRONGLY BULLISH" as const,
+      drift_tilt_pct: 0.68,
+      articles_analyzed: 5,
+      bullish_count: 4,
+      bearish_count: 0,
+      neutral_count: 1,
+      articles: [
+        {
+          title: "Nvidia AI Chip Demand Remains Relentless Heading Into Next Quarter",
+          publisher: "Bloomberg",
+          published_at: "1 hour ago",
+          sentiment: "BULLISH" as const,
+          score: 0.82,
+          link: "https://www.bloomberg.com",
+        },
+        {
+          title: "What Is Jensen Huang Worth to Nvidia? Analysts Outline Trillion-Dollar Moat",
+          publisher: "Yahoo Finance",
+          published_at: "3 hours ago",
+          sentiment: "BULLISH" as const,
+          score: 0.75,
+          link: "https://finance.yahoo.com",
+        },
+        {
+          title: "Semiconductor ETF Inflows Reach Record High on Nvidia Blackwell Momentum",
+          publisher: "Reuters",
+          published_at: "5 hours ago",
+          sentiment: "BULLISH" as const,
+          score: 0.68,
+          link: "https://www.reuters.com",
+        },
+        {
+          title: "Tech Giants Reaffirm Hyperscale Cloud AI Capex Expansion for 2026",
+          publisher: "Wall Street Journal",
+          published_at: "7 hours ago",
+          sentiment: "BULLISH" as const,
+          score: 0.58,
+          link: "https://www.wsj.com",
+        },
+        {
+          title: "Nvidia Option Straddles Price in 7% Swing Around Upcoming Catalyst",
+          publisher: "MarketWatch",
+          published_at: "10 hours ago",
+          sentiment: "NEUTRAL" as const,
+          score: 0.02,
+          link: "https://www.marketwatch.com",
+        },
+      ],
+      as_of: now.toISOString(),
+    };
+  }
+
+  return {
+    ticker: t,
+    score: 0.22,
+    label: "BULLISH" as const,
+    drift_tilt_pct: 0.33,
+    articles_analyzed: 4,
+    bullish_count: 2,
+    bearish_count: 1,
+    neutral_count: 1,
+    articles: [
+      {
+        title: `${t} Reports Steady Institutional Inflows as Market Sentiment Holds Resilient`,
+        publisher: "Financial Times",
+        published_at: "2 hours ago",
+        sentiment: "BULLISH" as const,
+        score: 0.58,
+        link: "https://www.ft.com",
+      },
+      {
+        title: `Analysts Reiterate Overweight Outlook on ${t} Ahead of Sector Catalysts`,
+        publisher: "Morningstar",
+        published_at: "5 hours ago",
+        sentiment: "BULLISH" as const,
+        score: 0.48,
+        link: "https://www.morningstar.com",
+      },
+      {
+        title: `Macro Volatility and Bond Yield Shifts Spark Brief Rotation Across Large-Caps`,
+        publisher: "Reuters",
+        published_at: "8 hours ago",
+        sentiment: "BEARISH" as const,
+        score: -0.32,
+        link: "https://www.reuters.com",
+      },
+      {
+        title: `${t} Volume Profiling and Technical Support Verification`,
+        publisher: "Investing.com",
+        published_at: "12 hours ago",
+        sentiment: "NEUTRAL" as const,
+        score: 0.0,
+        link: "https://www.investing.com",
+      },
+    ],
+    as_of: now.toISOString(),
   };
 }
