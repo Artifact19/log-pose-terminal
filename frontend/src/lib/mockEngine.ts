@@ -424,7 +424,7 @@ export function generateMockSentiment(ticker: string) {
           published_at: "2 hours ago",
           sentiment: "BULLISH" as const,
           score: 0.72,
-          link: "https://www.moneycontrol.com",
+          link: "https://www.google.com/search?q=Reliance+Industries+stock+outlook+bullish+Moneycontrol",
         },
         {
           title: "Reliance Industries shares jump following Q2 refining margins and retail expansion",
@@ -432,7 +432,7 @@ export function generateMockSentiment(ticker: string) {
           published_at: "4 hours ago",
           sentiment: "BULLISH" as const,
           score: 0.65,
-          link: "https://www.livemint.com",
+          link: "https://www.google.com/search?q=Reliance+Industries+shares+jump+Livemint",
         },
         {
           title: "Why is Reliance Industries stock surging today? Analysts weigh in",
@@ -440,7 +440,7 @@ export function generateMockSentiment(ticker: string) {
           published_at: "6 hours ago",
           sentiment: "BULLISH" as const,
           score: 0.54,
-          link: "https://in.investing.com",
+          link: "https://www.google.com/search?q=Why+is+Reliance+Industries+stock+surging+today+Investing.com",
         },
         {
           title: "Reliance may face competitive friction in consumer retail goods: Analyst review",
@@ -448,7 +448,7 @@ export function generateMockSentiment(ticker: string) {
           published_at: "8 hours ago",
           sentiment: "BEARISH" as const,
           score: -0.35,
-          link: "https://www.business-standard.com",
+          link: "https://www.google.com/search?q=Reliance+Britannia+biscuits+Business+Standard",
         },
         {
           title: "Reliance Industries Share Price - Live NSE Chart & Technical Assessment",
@@ -456,7 +456,7 @@ export function generateMockSentiment(ticker: string) {
           published_at: "12 hours ago",
           sentiment: "NEUTRAL" as const,
           score: 0.05,
-          link: "https://upstox.com",
+          link: "https://www.google.com/search?q=Reliance+Industries+Share+Price+Upstox",
         },
       ],
       as_of: now.toISOString(),
@@ -480,7 +480,7 @@ export function generateMockSentiment(ticker: string) {
           published_at: "1 hour ago",
           sentiment: "BULLISH" as const,
           score: 0.82,
-          link: "https://www.bloomberg.com",
+          link: "https://finance.yahoo.com/quote/NVDA/news",
         },
         {
           title: "What Is Jensen Huang Worth to Nvidia? Analysts Outline Trillion-Dollar Moat",
@@ -488,7 +488,7 @@ export function generateMockSentiment(ticker: string) {
           published_at: "3 hours ago",
           sentiment: "BULLISH" as const,
           score: 0.75,
-          link: "https://finance.yahoo.com",
+          link: "https://finance.yahoo.com/quote/NVDA/news",
         },
         {
           title: "Semiconductor ETF Inflows Reach Record High on Nvidia Blackwell Momentum",
@@ -496,7 +496,7 @@ export function generateMockSentiment(ticker: string) {
           published_at: "5 hours ago",
           sentiment: "BULLISH" as const,
           score: 0.68,
-          link: "https://www.reuters.com",
+          link: "https://finance.yahoo.com/quote/NVDA/news",
         },
         {
           title: "Tech Giants Reaffirm Hyperscale Cloud AI Capex Expansion for 2026",
@@ -504,7 +504,7 @@ export function generateMockSentiment(ticker: string) {
           published_at: "7 hours ago",
           sentiment: "BULLISH" as const,
           score: 0.58,
-          link: "https://www.wsj.com",
+          link: "https://finance.yahoo.com/quote/NVDA/news",
         },
         {
           title: "Nvidia Option Straddles Price in 7% Swing Around Upcoming Catalyst",
@@ -512,7 +512,7 @@ export function generateMockSentiment(ticker: string) {
           published_at: "10 hours ago",
           sentiment: "NEUTRAL" as const,
           score: 0.02,
-          link: "https://www.marketwatch.com",
+          link: "https://finance.yahoo.com/quote/NVDA/news",
         },
       ],
       as_of: now.toISOString(),
@@ -535,7 +535,7 @@ export function generateMockSentiment(ticker: string) {
         published_at: "2 hours ago",
         sentiment: "BULLISH" as const,
         score: 0.58,
-        link: "https://www.ft.com",
+        link: `https://www.google.com/search?q=${encodeURIComponent(t + " stock news Financial Times")}`,
       },
       {
         title: `Analysts Reiterate Overweight Outlook on ${t} Ahead of Sector Catalysts`,
@@ -543,7 +543,7 @@ export function generateMockSentiment(ticker: string) {
         published_at: "5 hours ago",
         sentiment: "BULLISH" as const,
         score: 0.48,
-        link: "https://www.morningstar.com",
+        link: `https://www.google.com/search?q=${encodeURIComponent(t + " stock target price Morningstar")}`,
       },
       {
         title: `Macro Volatility and Bond Yield Shifts Spark Brief Rotation Across Large-Caps`,
@@ -551,7 +551,7 @@ export function generateMockSentiment(ticker: string) {
         published_at: "8 hours ago",
         sentiment: "BEARISH" as const,
         score: -0.32,
-        link: "https://www.reuters.com",
+        link: `https://www.google.com/search?q=${encodeURIComponent(t + " stock market Reuters")}`,
       },
       {
         title: `${t} Volume Profiling and Technical Support Verification`,
@@ -559,7 +559,7 @@ export function generateMockSentiment(ticker: string) {
         published_at: "12 hours ago",
         sentiment: "NEUTRAL" as const,
         score: 0.0,
-        link: "https://www.investing.com",
+        link: `https://www.google.com/search?q=${encodeURIComponent(t + " stock technicals Investing.com")}`,
       },
     ],
     as_of: now.toISOString(),

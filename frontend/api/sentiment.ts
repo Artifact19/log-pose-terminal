@@ -9,7 +9,7 @@ export default async function handler(req: any, res: any) {
 
   const rawTicker = (req.query?.ticker || "AAPL").toString().trim().toUpperCase();
 
-  // Map ticker to natural financial search term and region
+  // Map ticker to natural financial search terms
   const TICKER_MAP: Record<string, { query: string; region: string }> = {
     AAPL: { query: "Apple stock", region: "US" },
     NVDA: { query: "Nvidia stock", region: "US" },
@@ -25,71 +25,109 @@ export default async function handler(req: any, res: any) {
   };
 
   try {
-    const rssUrl =
-      config.region === "IN"
-        ? `https://news.google.com/rss/search?q=${encodeURIComponent(config.query)}&hl=en-IN&gl=IN&ceid=IN:en`
-        : `https://news.google.com/rss/search?q=${encodeURIComponent(config.query)}&hl=en-US&gl=US&ceid=US:en`;
-
-    const response = await fetch(rssUrl, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        Accept: "application/rss+xml, application/xml, text/xml, */*",
-      },
-    });
-
-    if (!response.ok) {
-      return res.status(response.status).json({
-        ticker: rawTicker,
-        score: 0,
-        label: "NEUTRAL",
-        articles_analyzed: 0,
-        articles: [],
-      });
-    }
-
-    const xmlText = await response.text();
-
-    // Regex extract item tags
-    const items: Array<{
+    const rawItems: Array<{
       title: string;
       link: string;
       pubDate: string;
       source: string;
     }> = [];
 
-    const itemRegex =
-      /<item>[\s\S]*?<title>(.*?)<\/title>[\s\S]*?<link>(.*?)<\/link>[\s\S]*?<pubDate>(.*?)<\/pubDate>[\s\S]*?(?:<source[^>]*>(.*?)<\/source>)?[\s\S]*?<\/item>/g;
-
-    let match;
-    while ((match = itemRegex.exec(xmlText)) !== null && items.length < 10) {
-      const rawTitle = match[1]
-        .replace(/<!\[CDATA\[(.*?)\]\]>/g, "$1")
-        .replace(/&amp;/g, "&")
-        .replace(/&quot;/g, '"')
-        .replace(/&#39;/g, "'")
-        .replace(/&lt;/g, "<")
-        .replace(/&gt;/g, ">")
-        .trim();
-
-      const link = match[2].trim();
-      const pubDate = match[3].trim();
-      let source = (match[4] || "").trim();
-
-      // Extract publisher from title if title has ' - Publisher' suffix
-      let cleanTitle = rawTitle;
-      const lastDash = rawTitle.lastIndexOf(" - ");
-      if (lastDash > 0) {
-        if (!source) source = rawTitle.slice(lastDash + 3).trim();
-        cleanTitle = rawTitle.slice(0, lastDash).trim();
-      }
-
-      items.push({
-        title: cleanTitle,
-        link,
-        pubDate,
-        source: source || "Financial News",
+    // 1. Try Yahoo Finance Search API first (provides direct, verified article URLs)
+    try {
+      const yfUrl = `https://query2.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(
+        rawTicker.replace(/\.NS$/, "")
+      )}`;
+      const yfRes = await fetch(yfUrl, {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          Accept: "application/json",
+        },
       });
+
+      if (yfRes.ok) {
+        const yfData = await yfRes.json();
+        const news = Array.isArray(yfData?.news) ? yfData.news : [];
+        for (const n of news) {
+          if (!n.title || !n.link) continue;
+          let timeStr = "Recent";
+          if (n.providerPublishTime) {
+            const diffHours = Math.round((Date.now() - n.providerPublishTime * 1000) / 3600000);
+            timeStr = diffHours <= 1 ? "Just now" : `${diffHours} hours ago`;
+          }
+          rawItems.push({
+            title: n.title,
+            link: n.link, // Direct Yahoo Finance article URL
+            pubDate: timeStr,
+            source: n.publisher || "Yahoo Finance",
+          });
+          if (rawItems.length >= 8) break;
+        }
+      }
+    } catch {}
+
+    // 2. If fewer than 4 articles found, supplement with Google News RSS
+    if (rawItems.length < 4) {
+      const rssUrl =
+        config.region === "IN"
+          ? `https://news.google.com/rss/search?q=${encodeURIComponent(config.query)}&hl=en-IN&gl=IN&ceid=IN:en`
+          : `https://news.google.com/rss/search?q=${encodeURIComponent(config.query)}&hl=en-US&gl=US&ceid=US:en`;
+
+      const response = await fetch(rssUrl, {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          Accept: "application/rss+xml, application/xml, text/xml, */*",
+        },
+      });
+
+      if (response.ok) {
+        const xmlText = await response.text();
+        const itemRegex =
+          /<item>[\s\S]*?<title>(.*?)<\/title>[\s\S]*?<link>(.*?)<\/link>[\s\S]*?<pubDate>(.*?)<\/pubDate>[\s\S]*?(?:<source[^>]*>(.*?)<\/source>)?[\s\S]*?<\/item>/g;
+
+        let match;
+        while ((match = itemRegex.exec(xmlText)) !== null && rawItems.length < 8) {
+          const rawTitle = match[1]
+            .replace(/<!\[CDATA\[(.*?)\]\]>/g, "$1")
+            .replace(/&amp;/g, "&")
+            .replace(/&quot;/g, '"')
+            .replace(/&#39;/g, "'")
+            .replace(/&lt;/g, "<")
+            .replace(/&gt;/g, ">")
+            .trim();
+
+          const pubDate = match[3].trim();
+          let source = (match[4] || "").trim();
+
+          let cleanTitle = rawTitle;
+          const lastDash = rawTitle.lastIndexOf(" - ");
+          if (lastDash > 0) {
+            if (!source) source = rawTitle.slice(lastDash + 3).trim();
+            cleanTitle = rawTitle.slice(0, lastDash).trim();
+          }
+
+          // Use verified Google Search query to bypass broken Google RSS redirection and take the user to the exact live article
+          const directSearchLink = `https://www.google.com/search?q=${encodeURIComponent(
+            cleanTitle + " " + (source || "news")
+          )}`;
+
+          // Format relative time if possible
+          let timeAgo = pubDate;
+          const parsed = Date.parse(pubDate);
+          if (!isNaN(parsed)) {
+            const diffHours = Math.round((Date.now() - parsed) / 3600000);
+            timeAgo = diffHours <= 1 ? "Just now" : diffHours < 24 ? `${diffHours} hours ago` : `${Math.round(diffHours / 24)} days ago`;
+          }
+
+          rawItems.push({
+            title: cleanTitle,
+            link: directSearchLink,
+            pubDate: timeAgo,
+            source: source || "Financial News",
+          });
+        }
+      }
     }
 
     // Financial Sentiment Lexicons (Loughran-McDonald & VADER financial adaptations)
@@ -216,8 +254,12 @@ export default async function handler(req: any, res: any) {
     let bearishCount = 0;
     let neutralCount = 0;
 
-    const scoredArticles = items.map((item) => {
-      const words = item.title.toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter(Boolean);
+    const scoredArticles = rawItems.map((item) => {
+      const words = item.title
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, " ")
+        .split(/\s+/)
+        .filter(Boolean);
 
       let articleScore = 0;
       let hitCount = 0;
@@ -239,7 +281,6 @@ export default async function handler(req: any, res: any) {
         }
       }
 
-      // Normalize article score to [-1, 1]
       const normalizedScore = hitCount > 0 ? Math.max(-1, Math.min(1, articleScore / (hitCount * 1.5))) : 0;
 
       let sentimentLabel: "BULLISH" | "BEARISH" | "NEUTRAL" = "NEUTRAL";
@@ -275,7 +316,6 @@ export default async function handler(req: any, res: any) {
     else if (compositeScore <= -0.12) aggregateLabel = "BEARISH";
     else aggregateLabel = "NEUTRAL";
 
-    // Drift tilt: calibrated tilt from -1.5% to +1.5%
     const driftTiltPct = Number((compositeScore * 1.5).toFixed(2));
 
     return res.status(200).json({

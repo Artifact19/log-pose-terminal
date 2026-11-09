@@ -286,6 +286,17 @@ export const SentimentPulsePanel: React.FC<SentimentPulsePanelProps> = ({
                         {art.sentiment}
                       </span>
                     </span>
+
+                    <a
+                      href={art.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-beige-200/90 hover:bg-beige-300 text-ink-primary hover:text-terracotta-700 text-[11px] font-mono font-semibold border border-beige-300 transition shadow-2xs"
+                      title="Open full news story for verification"
+                    >
+                      <span>Read Story</span>
+                      <ExternalLink className="w-3 h-3 text-terracotta-600 shrink-0" />
+                    </a>
                   </div>
                 </div>
               );
@@ -303,3 +314,4 @@ export const SentimentPulsePanel: React.FC<SentimentPulsePanelProps> = ({
     </div>
   );
 };
+
