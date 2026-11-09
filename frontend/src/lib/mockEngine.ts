@@ -8,12 +8,12 @@ import type {
 } from "../types";
 
 const BASE_PRICES: Record<string, number> = {
-  AAPL: 228.5,
-  NVDA: 138.25,
-  MSFT: 412.0,
-  SPY: 574.8,
-  "RELIANCE.NS": 2740.0,
-  "TCS.NS": 4125.0,
+  AAPL: 342.37,
+  NVDA: 186.64,
+  MSFT: 530.61,
+  SPY: 735.29,
+  "RELIANCE.NS": 1324.4,
+  "TCS.NS": 2475.4,
 };
 
 export function toLocalDateStr(d: Date): string {
@@ -61,11 +61,19 @@ export function generateMockBars(ticker: string, count: number = 250): MarketBar
   const targetClose = getBasePrice(t);
   const rng = pseudoRandom(stringToSeed(`${t}_bars_stable`));
 
+  const isIndian = t.includes(".NS") || t.includes(".BO");
   const now = new Date();
   const dates: Date[] = [];
   let cur = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-  // Count backwards from current date to gather the exact count of trading days leading up to today
+  // In New York (ET), market closes at 4:00 PM (16:00).
+  // If viewing on Monday before regular session closes, the last official close is Friday Nov 6.
+  const nowET = new Date(now.toLocaleString("en-US", { timeZone: "America/New_York" }));
+  if (!isIndian && nowET.getHours() < 16 && cur.getDay() === 1) {
+    cur.setDate(cur.getDate() - 3);
+  }
+
+  // Count backwards from current date to gather the exact count of trading days leading up to the last session
   while (dates.length < count) {
     const day = cur.getDay();
     if (day !== 0 && day !== 6) {

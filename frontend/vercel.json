@@ -1,9 +1,12 @@
 {
   "rewrites": [
     {
+      "source": "/api/market/:ticker/bars",
+      "destination": "/api/bars?ticker=:ticker"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
   ]
 }
-

@@ -125,7 +125,12 @@ export async function fetchLedgerRunsFromSupabase(ticker?: string): Promise<Fore
 
   // Fallback to localStorage cache (with automatic stale run cleanup)
   try {
-    const isObsolete = (run: any) => !run?.anchor_date || run.anchor_date < "2026-11-01";
+    const isObsolete = (run: any) =>
+      !run?.anchor_date ||
+      run.anchor_date < "2026-11-01" ||
+      (run.ticker === "AAPL" && run.anchor_close_price < 300) ||
+      (run.ticker === "SPY" && run.anchor_close_price < 650) ||
+      (run.ticker === "MSFT" && run.anchor_close_price < 450);
 
     if (ticker) {
       const key = `logpose_saved_run_${ticker.toUpperCase()}`;
