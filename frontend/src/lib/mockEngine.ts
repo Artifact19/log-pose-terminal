@@ -52,28 +52,79 @@ function stringToSeed(str: string): number {
   return Math.abs(hash);
 }
 
-function getBasePrice(ticker: string): number {
+export function getBasePrice(ticker: string): number {
   return BASE_PRICES[ticker.toUpperCase()] || 150.0;
+}
+
+/**
+ * Returns the YYYY-MM-DD date string of the most recent completed trading session
+ * in the ticker's home exchange timezone:
+ * - Indian stocks (.NS / .BO -> Asia/Kolkata): session closes at 15:30 IST
+ * - US/other stocks (America/New_York): session closes at 16:00 ET
+ */
+export function getLastClosedMarketDate(ticker: string): string {
+  const t = ticker.toUpperCase();
+  const isIndian = t.endsWith(".NS") || t.endsWith(".BO");
+  const tz = isIndian ? "Asia/Kolkata" : "America/New_York";
+  const closeHourDec = isIndian ? 15.5 : 16.0;
+
+  const now = new Date();
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: tz,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "numeric",
+    minute: "numeric",
+    hour12: false,
+  }).formatToParts(now);
+
+  const getPart = (type: string) => parts.find((p) => p.type === type)?.value || "0";
+  const year = parseInt(getPart("year"), 10);
+  const month = parseInt(getPart("month"), 10);
+  const day = parseInt(getPart("day"), 10);
+  const hour = parseInt(getPart("hour"), 10) % 24;
+  const minute = parseInt(getPart("minute"), 10);
+
+  const cur = new Date(year, month - 1, day);
+  const timeDec = hour + minute / 60;
+
+  // If today is a weekday in the exchange's timezone, but the regular session hasn't closed yet,
+  // the last completed daily close is the previous trading session.
+  const dow = cur.getDay();
+  if (dow !== 0 && dow !== 6 && timeDec < closeHourDec) {
+    cur.setDate(cur.getDate() - 1);
+  }
+
+  // Roll back past weekends
+  while (cur.getDay() === 0 || cur.getDay() === 6) {
+    cur.setDate(cur.getDate() - 1);
+  }
+
+  return toLocalDateStr(cur);
+}
+
+/**
+ * Deterministic daily return for a specific (ticker, dateStr) session after 2026-11-09.
+ */
+export function getSessionDailyReturn(ticker: string, dateStr: string): number {
+  const t = ticker.toUpperCase();
+  const rng = pseudoRandom(stringToSeed(`${t}_session_close_${dateStr}`));
+  // Realistic daily return between -0.7% and +1.1% with slight positive drift
+  return (rng() - 0.42) * 0.016;
 }
 
 export function generateMockBars(ticker: string, count: number = 250): MarketBarsResponse {
   const t = ticker.toUpperCase();
-  const targetClose = getBasePrice(t);
+  const basePriceNov9 = getBasePrice(t);
   const rng = pseudoRandom(stringToSeed(`${t}_bars_stable`));
 
-  const isIndian = t.includes(".NS") || t.includes(".BO");
-  const now = new Date();
+  const lastClosedStr = getLastClosedMarketDate(t);
+  const [lYear, lMonth, lDay] = lastClosedStr.split("-").map(Number);
+  let cur = new Date(lYear, lMonth - 1, lDay);
+
   const dates: Date[] = [];
-  let cur = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-  // In New York (ET), market closes at 4:00 PM (16:00).
-  // If viewing on Monday before regular session closes, the last official close is Friday Nov 6.
-  const nowET = new Date(now.toLocaleString("en-US", { timeZone: "America/New_York" }));
-  if (!isIndian && nowET.getHours() < 16 && cur.getDay() === 1) {
-    cur.setDate(cur.getDate() - 3);
-  }
-
-  // Count backwards from current date to gather the exact count of trading days leading up to the last session
+  // Count backwards from lastClosedStr to gather the exact count of trading days
   while (dates.length < count) {
     const day = cur.getDay();
     if (day !== 0 && day !== 6) {
@@ -82,12 +133,28 @@ export function generateMockBars(ticker: string, count: number = 250): MarketBar
     cur.setDate(cur.getDate() - 1);
   }
 
-  // Work backward from targetClose so historical closes connect seamlessly to targetClose
-  const closes: number[] = [targetClose];
-  for (let i = 1; i < count; i++) {
-    const dailyReturn = (rng() - 0.495) * 0.022 + Math.sin(i / 14) * 0.007;
-    const prevClose = closes[0] / (1 + dailyReturn);
-    closes.unshift(Number(prevClose.toFixed(2)));
+  const dateStrs = dates.map((d) => toLocalDateStr(d));
+  const refDateStr = "2026-11-09";
+  let refIdx = dateStrs.indexOf(refDateStr);
+  if (refIdx === -1) {
+    refIdx = dateStrs.length - 1;
+  }
+
+  const closes: number[] = new Array(count);
+  closes[refIdx] = basePriceNov9;
+
+  // Work backward from 2026-11-09 so historical closes up to Nov 9 remain 100% identical
+  for (let i = refIdx - 1; i >= 0; i--) {
+    const stepBack = refIdx - i;
+    const dailyReturn = (rng() - 0.495) * 0.022 + Math.sin(stepBack / 14) * 0.007;
+    const prevClose = closes[i + 1] / (1 + dailyReturn);
+    closes[i] = Number(prevClose.toFixed(2));
+  }
+
+  // Work forward from 2026-11-09 for any completed trading sessions after Nov 9 (e.g., Nov 10+)
+  for (let i = refIdx + 1; i < count; i++) {
+    const dRet = getSessionDailyReturn(t, dateStrs[i]);
+    closes[i] = Number((closes[i - 1] * (1 + dRet)).toFixed(2));
   }
 
   const bars: OHLCVBar[] = [];
@@ -98,7 +165,7 @@ export function generateMockBars(ticker: string, count: number = 250): MarketBar
     const high = Number((Math.max(open, close) * (1 + rng() * 0.007)).toFixed(2));
     const low = Number((Math.min(open, close) * (1 - rng() * 0.007)).toFixed(2));
     const volume = Math.round(15000000 + rng() * 10000000);
-    const dStr = toLocalDateStr(dates[i]);
+    const dStr = dateStrs[i];
 
     bars.push({
       date: dStr,
@@ -110,7 +177,7 @@ export function generateMockBars(ticker: string, count: number = 250): MarketBar
     });
   }
 
-  const lastBarDate = bars.length > 0 ? bars[bars.length - 1].date : toLocalDateStr(now);
+  const lastBarDate = bars.length > 0 ? bars[bars.length - 1].date : lastClosedStr;
 
   return {
     ticker: t,

@@ -19,7 +19,7 @@ export const Scorecard: React.FC<ScorecardProps> = ({ run, onViewOnChart }) => {
             Performance Verification: {run.ticker}
           </span>
           <span className="text-[11px] text-ink-muted ml-2 font-mono">
-            Forecast Made: {fmtDate(run.anchor_date)} (Base Price: ${run.anchor_close_price.toFixed(2)})
+            Forecast Made: {fmtDate(run.anchor_date)} (Base Price: {fmtPrice(run.anchor_close_price, run.ticker)})
           </span>
         </div>
 

@@ -17,7 +17,11 @@ export function fmtPct(val: number | null | undefined, signed: boolean = true): 
 export function fmtDate(dStr: string | null | undefined): string {
   if (!dStr) return "—";
   try {
-    const d = new Date(dStr);
+    const clean = dStr.trim();
+    const ymdMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(clean);
+    const d = ymdMatch
+      ? new Date(Number(ymdMatch[1]), Number(ymdMatch[2]) - 1, Number(ymdMatch[3]))
+      : new Date(clean);
     return d.toLocaleDateString(undefined, {
       month: "short",
       day: "numeric",

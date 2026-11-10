@@ -21,6 +21,8 @@ import {
 import {
   saveForecastToSupabase,
   fetchLedgerRunsFromSupabase,
+  reconcilePendingRuns,
+  calculateLiveLedgerStats,
 } from "../lib/supabasePersistence";
 
 import {
@@ -184,33 +186,53 @@ export const api = {
   getLedgerRun: (runId: string) =>
     request<ForecastRunDetail>(`/ledger/${runId}`, undefined, () => generateMockForecast("AAPL", 5)),
 
-  getGhostRuns: (ticker: string, n: number = 10) =>
-    request<GhostRun[]>(`/ledger/ghosts?ticker=${encodeURIComponent(ticker)}&n=${n}`, undefined, () => []),
+  getGhostRuns: async (ticker: string, n: number = 10) => {
+    const persisted = await fetchLedgerRunsFromSupabase(ticker);
+    if (persisted && persisted.length > 0) {
+      return persisted.slice(0, n).map((r) => ({
+        run_id: r.id,
+        anchor_date: r.anchor_date,
+        anchor_close_price: r.anchor_close_price,
+        points: (r.points || []).map((p) => ({
+          step_ahead: p.step_ahead,
+          target_trading_date: p.target_trading_date,
+          predicted_close: p.predicted_close,
+          lower_80: p.lower_80,
+          upper_80: p.upper_80,
+          actual_close: p.actual_close,
+          inside_80_band: p.inside_80_band,
+        })),
+      }));
+    }
+    return request<GhostRun[]>(
+      `/ledger/ghosts?ticker=${encodeURIComponent(ticker)}&n=${n}`,
+      undefined,
+      () => []
+    );
+  },
 
-  getLedgerStats: (ticker?: string, windowDays: number = 30) => {
+  getLedgerStats: async (ticker?: string, windowDays: number = 30) => {
+    const liveStats = await calculateLiveLedgerStats(ticker, windowDays);
+    if (liveStats && liveStats.resolved_count > 0) {
+      return liveStats;
+    }
     const params = new URLSearchParams();
     if (ticker) params.append("ticker", ticker);
     params.append("window", String(windowDays));
-    return request<LedgerStats>(`/ledger/stats?${params.toString()}`, undefined, () => ({
-      ticker,
-      window_days: windowDays,
-      resolved_count: 14,
-      mae_pct: 1.85,
-      directional_accuracy: 0.549,
-      coverage_80: 0.788,
-      coverage_95: 0.952,
-    }));
+    return request<LedgerStats>(`/ledger/stats?${params.toString()}`, undefined, () => liveStats);
   },
 
-  triggerReconcile: (ticker?: string) =>
-    request<{ resolved_points: number; affected_runs: number }>(
+  triggerReconcile: async (ticker?: string) => {
+    const cloudCounts = await reconcilePendingRuns(ticker);
+    return request<{ resolved_points: number; affected_runs: number }>(
       "/reconcile",
       {
         method: "POST",
         body: JSON.stringify({ ticker }),
       },
-      () => ({ resolved_points: 0, affected_runs: 0 })
-    ),
+      () => cloudCounts
+    );
+  },
 
   getModels: async (ticker: string) => {
     try {

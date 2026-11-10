@@ -23,7 +23,23 @@ export const LedgerTable: React.FC<LedgerTableProps> = ({
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [tickerFilter, setTickerFilter] = useState<string>("");
   const [isCleaning, setIsCleaning] = useState(false);
+  const [localReconciling, setLocalReconciling] = useState(false);
+  const [justReconciled, setJustReconciled] = useState(false);
   const { isAdmin } = useAuth();
+
+  const busyReconciling = isReconciling || localReconciling;
+
+  const handleReconcileClick = () => {
+    if (busyReconciling) return;
+    setLocalReconciling(true);
+    setJustReconciled(false);
+    onReconcile();
+    setTimeout(() => {
+      setLocalReconciling(false);
+      setJustReconciled(true);
+      setTimeout(() => setJustReconciled(false), 2000);
+    }, 650);
+  };
 
   const handleAdminReset = async () => {
     if (!confirm("Are you sure you want to clean all historical forecast runs and reset the ledger?")) return;
@@ -114,13 +130,31 @@ export const LedgerTable: React.FC<LedgerTableProps> = ({
           )}
 
           <button
-            onClick={onReconcile}
-            disabled={isReconciling}
-            className="tactile-pill flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-mono font-medium text-ink-primary hover:text-terracotta-700 transition-colors cursor-pointer disabled:opacity-50"
+            onClick={handleReconcileClick}
+            disabled={busyReconciling}
+            className={`tactile-pill flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-mono font-medium transition-colors cursor-pointer disabled:opacity-75 ${
+              busyReconciling
+                ? "text-terracotta-700 bg-terracotta-50/70 border-terracotta-300"
+                : justReconciled
+                ? "text-emerald-700 bg-emerald-50/70 border-emerald-300"
+                : "text-ink-primary hover:text-terracotta-700"
+            }`}
             title="Fetch latest closing prices from the market to audit pending predictions"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${isReconciling ? "animate-spin text-terracotta-500" : "text-ink-muted"}`} />
-            {isReconciling ? "Checking Market Closes..." : "Check Actual Prices"}
+            <RefreshCw
+              className={`w-3.5 h-3.5 ${
+                busyReconciling
+                  ? "animate-spin text-terracotta-500"
+                  : justReconciled
+                  ? "text-emerald-600"
+                  : "text-ink-muted"
+              }`}
+            />
+            {busyReconciling
+              ? "Checking Market Closes..."
+              : justReconciled
+              ? "Actuals Verified ✓"
+              : "Check Actual Prices"}
           </button>
         </div>
       </div>
