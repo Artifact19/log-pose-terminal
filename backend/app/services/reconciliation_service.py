@@ -102,7 +102,10 @@ class ReconciliationService:
                     ohlcv = data_service.fetch_ohlcv(
                         t_symbol, start=start_fetch, end=end_fetch, auto_adjust=True
                     )
-                except Exception:
+                except Exception as exc:
+                    logger.warning(
+                        f"Failed to fetch market data to reconcile {t_symbol}: {exc}"
+                    )
                     continue
 
                 observed_close = ohlcv["Close"]

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import importlib
 import json
+import logging
 from dataclasses import dataclass
 from datetime import date, datetime
 from pathlib import Path
@@ -24,6 +25,7 @@ from backend.app.ml_core.contracts import (
 ROOT = Path(__file__).resolve().parent.parent.parent.parent
 ARTIFACT_DIR = ROOT / "artifacts"
 MANIFEST_PATH = ROOT / "backend" / "app" / "ml_core" / "exported_manifest.json"
+logger = logging.getLogger("ml_pipeline")
 
 
 @dataclass
@@ -59,8 +61,8 @@ def load_methodology() -> MethodologyBundle:
         try:
             m = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
             combined_hash = m.get("combined_notebook_hash", "unknown")
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Could not read manifest hash: {e}")
 
     return MethodologyBundle(
         features_mod=feat_mod,

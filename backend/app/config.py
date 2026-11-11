@@ -15,6 +15,9 @@ class Settings:
         self.MAX_HORIZON: int = int(os.getenv("MAX_HORIZON", "20"))
         self.DEFAULT_TRAIN_YEARS: int = int(os.getenv("DEFAULT_TRAIN_YEARS", "8"))
         self.RETRAIN_COVERAGE_FLOOR: float = float(os.getenv("RETRAIN_COVERAGE_FLOOR", "0.65"))
+        self.RETRAIN_ACTIVATION_COVERAGE: float = float(
+            os.getenv("RETRAIN_ACTIVATION_COVERAGE", "0.70")
+        )
         self.RETRAIN_LOOKBACK_DAYS: int = int(os.getenv("RETRAIN_LOOKBACK_DAYS", "10"))
         self.CORS_ORIGINS: str = os.getenv(
             "CORS_ORIGINS",

@@ -107,10 +107,16 @@ class ForecastRepository:
     def calculate_stats(
         self, session: Session, ticker: Optional[str] = None, window_days: int = 30
     ) -> dict:
-        cutoff = datetime.now(timezone.utc) - timedelta(days=window_days)
+        from sqlalchemy import or_
+
+        cutoff_dt = datetime.now(timezone.utc) - timedelta(days=window_days)
+        cutoff_d = cutoff_dt.date()
         statement = select(ForecastPoint).join(ForecastRun).where(
             ForecastPoint.actual_close != None,  # noqa: E711
-            ForecastRun.created_at >= cutoff,
+            or_(
+                ForecastPoint.resolved_at >= cutoff_dt,
+                (ForecastPoint.resolved_at == None) & (ForecastPoint.target_trading_date >= cutoff_d),
+            ),
         )
         if ticker:
             statement = statement.where(ForecastRun.ticker == ticker.upper())

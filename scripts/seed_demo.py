@@ -64,10 +64,11 @@ def seed_demo_data() -> None:
         d_14 = max([d for d in session_dates if d <= target_14d], default=session_dates[len(session_dates) // 3])
         d_7 = max([d for d in session_dates if d <= target_7d], default=session_dates[len(session_dates) // 2])
 
-        # (a) Train initial model using data up to d_14 so it has not seen the demo test window
-        print(f"[seed] Training model for {ticker} with training end date <= {d_14}...")
+        # (a) Train initial model using data up to d_21 (the earliest anchor date)
+        # Guarantee: model training cutoff <= earliest anchor (d_21) so the model has zero lookahead leakage
+        print(f"[seed] Training model for {ticker} with training end date <= {d_21}...")
         try:
-            retrain_service.trigger_retrain(ticker, force=True, as_of=d_14, horizon=5)
+            retrain_service.trigger_retrain(ticker, force=True, as_of=d_21, horizon=5, sync=True)
         except Exception as e:
             print(f"[seed] Model training failed for {ticker}: {e}")
             continue

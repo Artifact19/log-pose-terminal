@@ -115,8 +115,8 @@ class DataService:
                     df = pd.read_parquet(cache_file)
                     if not df.empty:
                         return df
-                except Exception:
-                    pass
+                except Exception as cache_read_err:
+                    logger.debug(f"Cache read error for {cache_file}: {cache_read_err}")
 
         # Fetch from yfinance with retry
         last_exc = None
@@ -151,10 +151,21 @@ class DataService:
                 df.index = pd.DatetimeIndex(df.index).tz_localize(None).normalize()
                 df = df[~df.index.duplicated(keep="last")].sort_index()
 
+                # Drop incomplete intraday bar if exchange regular session has not closed yet
+                from backend.app.services.calendar_service import is_session_closed
+                if not df.empty:
+                    latest_session = df.index[-1].date()
+                    if not is_session_closed(t, latest_session):
+                        logger.info(
+                            f"Dropping incomplete intraday bar for {t} on {latest_session} "
+                            f"because exchange regular session has not officially closed."
+                        )
+                        df = df.iloc[:-1].copy()
+
                 try:
                     df.to_parquet(cache_file)
-                except Exception:
-                    pass
+                except Exception as cache_err:
+                    logger.debug(f"Failed to cache parquet file: {cache_err}")
 
                 return df
             except Exception as e:
@@ -164,10 +175,20 @@ class DataService:
         logger.warning(f"yfinance failed for {t} ({last_exc}), trying direct Yahoo chart API fallback...")
         try:
             df = self._fetch_via_yahoo_chart_api(t, start_str, end)
+            from backend.app.services.calendar_service import is_session_closed
+            if not df.empty:
+                latest_session = df.index[-1].date()
+                if not is_session_closed(t, latest_session):
+                    logger.info(
+                        f"Dropping incomplete intraday bar for {t} on {latest_session} "
+                        f"because exchange regular session has not officially closed."
+                    )
+                    df = df.iloc[:-1].copy()
+
             try:
                 df.to_parquet(cache_file)
-            except Exception:
-                pass
+            except Exception as cache_err:
+                logger.debug(f"Failed to cache fallback parquet file: {cache_err}")
             return df
         except Exception as fallback_exc:
             raise DataUnavailableError(

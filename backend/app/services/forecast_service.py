@@ -89,11 +89,25 @@ class ForecastService:
                     bars = self._build_history_bars(ohlcv)
                     return existing, pts, bars
 
+        # Adaptive Conformal Inference (ACI): feed live 80% coverage if >= 20 resolved points
+        live_ledger_picp: Optional[float] = None
+        with Session(engine) as session:
+            stats = forecast_repo.calculate_stats(session, ticker=t, window_days=30)
+            if stats.get("resolved_count", 0) >= 20:
+                live_ledger_picp = float(stats["coverage_80"])
+
         # Project trading dates
         trading_dates = project_trading_dates(t, anchor_date, h)
 
         # Predict via ML pipeline
-        bundle = predict(ohlcv, t, str(local_artifact), trading_dates, requested_horizon=h)
+        bundle = predict(
+            ohlcv,
+            t,
+            str(local_artifact),
+            trading_dates,
+            live_ledger_picp=live_ledger_picp,
+            requested_horizon=h,
+        )
 
         # Backdate model leakage risk check
         metadata = bundle.confidence.breakdown.model_dump(mode="json")
