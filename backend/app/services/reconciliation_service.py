@@ -35,12 +35,23 @@ def resolve_run(
         if ts_sess not in observed_close.index:
             continue
 
-        actual = float(observed_close.loc[ts_sess])
+        val = observed_close.loc[ts_sess]
+        if hasattr(val, "iloc"):
+            val = val.iloc[-1]
+        elif isinstance(val, (list, np.ndarray)) and len(val) > 0:
+            val = val[-1]
+        actual = float(val)
 
         # Date realignment check
         if p.target_trading_date != sess:
             if run.confidence_metadata is None:
                 run.confidence_metadata = {}
+            elif not isinstance(run.confidence_metadata, dict):
+                import json
+                try:
+                    run.confidence_metadata = json.loads(run.confidence_metadata)
+                except Exception:
+                    run.confidence_metadata = {}
             run.confidence_metadata.setdefault("date_realignments", []).append(
                 {
                     "step": p.step_ahead,
@@ -51,19 +62,27 @@ def resolve_run(
             p.target_trading_date = sess
 
         # Calculate error and metrics
-        ar = float(np.log(actual / run.anchor_close_price))
+        base_anchor = run.anchor_close_price if run.anchor_close_price and run.anchor_close_price > 0 else actual
+        ar = float(np.log(max(1e-6, actual) / max(1e-6, base_anchor)))
         p.actual_close = actual
         p.actual_return = ar
-        p.abs_error = abs(actual - p.predicted_close)
-        p.pct_error = (p.predicted_close - actual) / actual * 100.0
+        pred_c = p.predicted_close if p.predicted_close is not None else actual
+        p.abs_error = abs(actual - pred_c)
+        p.pct_error = (pred_c - actual) / actual * 100.0 if actual != 0 else 0.0
 
+        pred_r = p.predicted_return if p.predicted_return is not None else 0.0
         if ar == 0.0:
-            p.direction_correct = bool(p.predicted_return == 0.0)
+            p.direction_correct = bool(pred_r == 0.0)
         else:
-            p.direction_correct = bool(np.sign(p.predicted_return) == np.sign(ar))
+            p.direction_correct = bool(np.sign(pred_r) == np.sign(ar))
 
-        p.inside_80_band = bool(p.lower_80 <= actual <= p.upper_80)
-        p.inside_95_band = bool(p.lower_95 <= actual <= p.upper_95)
+        lower80 = p.lower_80 if p.lower_80 is not None else -float("inf")
+        upper80 = p.upper_80 if p.upper_80 is not None else float("inf")
+        lower95 = p.lower_95 if p.lower_95 is not None else -float("inf")
+        upper95 = p.upper_95 if p.upper_95 is not None else float("inf")
+
+        p.inside_80_band = bool(lower80 <= actual <= upper80)
+        p.inside_95_band = bool(lower95 <= actual <= upper95)
         p.resolved_at = datetime.now(timezone.utc)
         newly += 1
 

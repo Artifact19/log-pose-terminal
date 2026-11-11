@@ -1,3 +1,4 @@
+import logging
 import uuid
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -15,6 +16,8 @@ from backend.app.schemas.api import (
 )
 from backend.app.services.reconciliation_service import reconciliation_service
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter()
 
 
@@ -26,8 +29,11 @@ def list_ledger_runs(
     offset: int = Query(default=0, ge=0),
     session: Session = Depends(get_session),
 ):
-    # Auto-trigger reconciliation first
-    reconciliation_service.resolve_pending_forecasts(ticker=ticker)
+    # Auto-trigger reconciliation first (non-blocking if market data or alignment fails)
+    try:
+        reconciliation_service.resolve_pending_forecasts(ticker=ticker)
+    except Exception as exc:
+        logger.warning(f"Failed to auto-resolve pending forecasts in /ledger: {exc}")
 
     runs = forecast_repo.list_runs(
         session, ticker=ticker, status=status, limit=limit, offset=offset
