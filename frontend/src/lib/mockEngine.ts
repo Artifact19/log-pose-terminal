@@ -432,18 +432,16 @@ export function generateMockRetrainDiff(ticker: string): any {
     empirical_coverage_80: 0.771,
   };
   const now = new Date();
-  const vTag = `v${now.toISOString().replace(/[^\d]/g, "").slice(0, 14)}Z`;
-  const improvedMae = Number((spec.walk_forward_mae * 0.91).toFixed(2));
-  const improvedAcc = Number(Math.min(0.62, spec.directional_accuracy + 0.024).toFixed(3));
-  const improvedCov = Number(Math.min(0.825, spec.empirical_coverage_80 + 0.015).toFixed(3));
+  const vTag = `sim-${now.toISOString().replace(/[^\d]/g, "").slice(0, 14)}Z`;
 
   return {
-    job_id: `job-${Date.now()}`,
+    job_id: `sim-job-${Date.now()}`,
     ticker: t,
-    retrained: true,
-    activated: true,
+    retrained: false,
+    activated: false,
+    is_simulated: true,
     activation_reason:
-      `Walk-forward validation achieved lower MAE (${improvedMae}% vs ${spec.walk_forward_mae}%) and satisfied empirical coverage constraints (>0.65).`,
+      "Simulated demo mode: backend unreachable. No real model retrained or evaluated.",
     old: {
       version_tag: spec.version_tag,
       walk_forward_mae: spec.walk_forward_mae,
@@ -452,9 +450,9 @@ export function generateMockRetrainDiff(ticker: string): any {
     },
     new: {
       version_tag: vTag,
-      walk_forward_mae: improvedMae,
-      directional_accuracy: improvedAcc,
-      empirical_coverage_80: improvedCov,
+      walk_forward_mae: spec.walk_forward_mae,
+      directional_accuracy: spec.directional_accuracy,
+      empirical_coverage_80: spec.empirical_coverage_80,
     },
   };
 }

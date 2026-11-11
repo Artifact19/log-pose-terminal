@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { QueryClient, QueryClientProvider, useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "./api/client";
+import { api, wakeUpServer, subscribeBackendState, getBackendState } from "./api/client";
+import { RefreshCw, AlertTriangle } from "lucide-react";
 import { Header } from "./components/Header";
 import { TickerBar } from "./components/TickerBar";
 import { TickerSelectionHub } from "./components/TickerSelectionHub";
@@ -34,7 +35,14 @@ function TerminalApp() {
   const [selectedRun, setSelectedRun] = useState<ForecastRunDetail | null>(null);
   const [isTourOpen, setIsTourOpen] = useState(false);
   const [forecastGeneratedInSession, setForecastGeneratedInSession] = useState(false);
+  const [backendState, setBackendState] = useState(getBackendState());
   const { shouldLaunchTour, resetTourLaunch, isAdmin } = useAuth();
+
+  useEffect(() => {
+    wakeUpServer();
+    const unsub = subscribeBackendState(setBackendState);
+    return unsub;
+  }, []);
 
   // Show tour ONLY when someone signs up for the first time
   useEffect(() => {
@@ -190,6 +198,22 @@ function TerminalApp() {
         health={health}
         onOpenTour={() => setIsTourOpen(true)}
       />
+
+      {/* Cold start waking banner */}
+      {backendState.isWakingUp && (
+        <div className="bg-amber-500/15 border-b border-amber-500/30 px-4 py-2 text-center text-xs text-amber-900 flex items-center justify-center gap-2 font-mono">
+          <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-700" />
+          <span>Waking up forecasting server… (Render free tier instance is spinning up, this may take 30–60s)</span>
+        </div>
+      )}
+
+      {/* Demo mode banner */}
+      {backendState.isDemoMode && !backendState.isWakingUp && (
+        <div className="bg-terracotta-500/10 border-b border-terracotta-500/25 px-4 py-2 text-center text-xs text-terracotta-800 font-mono font-medium flex items-center justify-center gap-2">
+          <AlertTriangle className="w-3.5 h-3.5 text-terracotta-600 shrink-0" />
+          <span>Demo mode: backend unreachable — forecasts are simulated, not from the model</span>
+        </div>
+      )}
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 py-6">

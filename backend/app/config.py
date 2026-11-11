@@ -16,7 +16,13 @@ class Settings:
         self.DEFAULT_TRAIN_YEARS: int = int(os.getenv("DEFAULT_TRAIN_YEARS", "8"))
         self.RETRAIN_COVERAGE_FLOOR: float = float(os.getenv("RETRAIN_COVERAGE_FLOOR", "0.65"))
         self.RETRAIN_LOOKBACK_DAYS: int = int(os.getenv("RETRAIN_LOOKBACK_DAYS", "10"))
-        self.CORS_ORIGINS: str = os.getenv("CORS_ORIGINS", "http://localhost:5173")
+        self.CORS_ORIGINS: str = os.getenv(
+            "CORS_ORIGINS",
+            "http://localhost:5173,http://localhost:8000,https://log-pose-terminal.vercel.app",
+        )
+        self.CORS_ORIGIN_REGEX: str = os.getenv(
+            "CORS_ORIGIN_REGEX", r"^https://.*\.vercel\.app$"
+        )
         self.ENV: str = os.getenv("ENV", "production")
         self.ADMIN_EMAIL: str = os.getenv("ADMIN_EMAIL", "arnavraut4567@gmail.com")
         self.SUPABASE_URL: str = os.getenv("SUPABASE_URL", os.getenv("VITE_SUPABASE_URL", ""))

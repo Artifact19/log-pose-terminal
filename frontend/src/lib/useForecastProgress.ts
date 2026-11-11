@@ -5,10 +5,17 @@ export interface ForecastProgressState {
   stage: string;
 }
 
+export interface JobProgressInput {
+  stage?: string;
+  progressFold?: number;
+  totalFolds?: number;
+}
+
 export function useForecastProgress(
   isLoading: boolean,
   isError: boolean = false,
-  isSuccess: boolean = false
+  isSuccess: boolean = false,
+  jobProgress?: JobProgressInput | null
 ): ForecastProgressState {
   const [progress, setProgress] = useState(0);
   const [stage, setStage] = useState("");
@@ -16,6 +23,16 @@ export function useForecastProgress(
   const timeoutRef = useRef<any>(null);
 
   useEffect(() => {
+    // If a retrain job is running with real fold updates, drive progress directly from job status
+    if (jobProgress && (jobProgress.progressFold !== undefined || jobProgress.stage)) {
+      const folds = jobProgress.totalFolds || 8;
+      const fold = jobProgress.progressFold || 0;
+      const pct = Math.min(98, Math.round((fold / folds) * 100));
+      setProgress(pct);
+      setStage(jobProgress.stage || `Evaluating walk-forward fold ${fold}/${folds}...`);
+      return;
+    }
+
     // If an error occurred or loading was cancelled, clear immediately
     if (isError) {
       if (intervalRef.current) clearInterval(intervalRef.current);
@@ -45,7 +62,7 @@ export function useForecastProgress(
       return;
     }
 
-    // Loading started: reset and animate
+    // Loading started: reset and animate request timer
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     setProgress(10);
     setStage("Syncing market data & daily closes...");
@@ -71,7 +88,7 @@ export function useForecastProgress(
         setProgress(p);
         setStage("Calibrating 80% & 95% conformal bounds...");
       } else {
-        // Slow creep up to 98% while waiting for API
+        // Slow creep up to 98% while waiting for API response
         setProgress((prev) => (prev < 98 ? prev + 1 : 98));
         setStage("Finalizing projection trajectory...");
       }
@@ -80,7 +97,7 @@ export function useForecastProgress(
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [isLoading, isError, isSuccess]);
+  }, [isLoading, isError, isSuccess, jobProgress?.stage, jobProgress?.progressFold, jobProgress?.totalFolds]);
 
   return { progress, stage };
 }
