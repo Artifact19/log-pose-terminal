@@ -49,10 +49,14 @@ class ForecastService:
                     f"Ticker '{t}' is not supported for automated model training. Supported tickers: {', '.join(settings.SUPPORTED_TICKERS)}"
                 )
             train_horizon = min(max(h, settings.DEFAULT_HORIZON), settings.MAX_HORIZON)
-            job_info = retrain_service.trigger_retrain(t, force=True, as_of=as_of, horizon=train_horizon)
+            try:
+                job_info = retrain_service.trigger_retrain(t, force=True, as_of=as_of, horizon=train_horizon)
+                job_id = job_info.get("job_id", "in-progress")
+            except RuntimeError:
+                job_id = "in-progress"
             raise HTTPException(
                 status_code=202,
-                detail=f"No active model found for {t}. Automated training job '{job_info['job_id']}' initiated in background. Please try again shortly.",
+                detail=f"No active model found for {t}. Automated training job '{job_id}' is running in background. Please wait ~30-60s for training to complete and try again.",
             )
 
         # Ensure artifact is downloaded/cached locally from Supabase Storage
@@ -60,11 +64,23 @@ class ForecastService:
             t, active_model.version_tag, active_model.artifact_path
         )
 
+        b_horizon = 5
         try:
             b_meta = joblib.load(local_artifact)
-            if b_meta.get("horizon", 5) < h and t in settings.SUPPORTED_TICKERS:
+            b_horizon = b_meta.get("horizon", 5)
+            if b_horizon < h and t in settings.SUPPORTED_TICKERS:
                 train_horizon = min(max(h, settings.DEFAULT_HORIZON), settings.MAX_HORIZON)
-                retrain_service.trigger_retrain(t, force=True, as_of=as_of, horizon=train_horizon)
+                try:
+                    job_info = retrain_service.trigger_retrain(t, force=True, as_of=as_of, horizon=train_horizon)
+                    job_id = job_info.get("job_id", "in-progress")
+                except RuntimeError:
+                    job_id = "in-progress"
+                raise HTTPException(
+                    status_code=202,
+                    detail=f"Active model for {t} only supports {b_horizon}-day horizon. A {h}-day model is currently training in background (job: '{job_id}'). Please wait ~30-60s and try again.",
+                )
+        except HTTPException:
+            raise
         except Exception as e:
             logger.debug(f"Could not check model metadata for horizon: {e}")
 

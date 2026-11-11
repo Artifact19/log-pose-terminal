@@ -127,6 +127,16 @@ async function request<T>(
       }
     }
 
+    if (res.status === 202) {
+      setBackendState(false, false);
+      let msg = "Model is currently training in the background. Please try again in ~30s.";
+      try {
+        const body = await res.json();
+        if (body.detail) msg = body.detail;
+      } catch {}
+      throw new Error(msg);
+    }
+
     if (!res.ok) {
       let errorDetail = `Request failed (${res.status})`;
       try {
@@ -137,7 +147,7 @@ async function request<T>(
       } catch {}
 
       // If server returned 400 or 403 or 422, this is a real backend response, not a failure to reach server
-      if (res.status === 400 || res.status === 401 || res.status === 403 || res.status === 422) {
+      if (res.status === 400 || res.status === 401 || res.status === 403 || res.status === 409 || res.status === 422) {
         setBackendState(false, false);
         throw new Error(errorDetail);
       }
