@@ -184,7 +184,9 @@ export const ModelOpsPanel: React.FC<ModelOpsPanelProps> = ({
               <div className="bg-beige-100/60 p-3 rounded-xl border border-beige-200 shadow-xs" title="Average percentage error across backtested historical forecasts (Benchmark: ~2.65% Persistence)">
                 <span className="text-[10px] text-ink-muted uppercase tracking-wider block">Average Error (MAE)</span>
                 <span className="text-base font-bold text-ink-primary mt-0.5 block">
-                  {activeModel.walk_forward_mae.toFixed(2)}%
+                  {activeModel.walk_forward_mae !== undefined && activeModel.walk_forward_mae !== null
+                    ? `${activeModel.walk_forward_mae.toFixed(2)}%`
+                    : "—"}
                 </span>
                 <span className="text-[10px] text-ink-muted block mt-0.5">
                   vs {activeModel.metrics_json?.baseline_zero_return_mae !== undefined && activeModel.metrics_json?.baseline_zero_return_mae !== null
@@ -196,9 +198,11 @@ export const ModelOpsPanel: React.FC<ModelOpsPanelProps> = ({
               <div className="bg-beige-100/60 p-3 rounded-xl border border-beige-200 shadow-xs" title="Percentage of times the model correctly anticipated whether the stock moved up or down (Benchmark: 50.0% Random Walk)">
                 <span className="text-[10px] text-ink-muted uppercase tracking-wider block">Trend Accuracy</span>
                 <span className="text-base font-bold text-ink-primary mt-0.5 block">
-                  {(activeModel.directional_accuracy * 100).toFixed(1)}%
+                  {activeModel.directional_accuracy !== undefined && activeModel.directional_accuracy !== null
+                    ? `${(activeModel.directional_accuracy * 100).toFixed(1)}%`
+                    : "—"}
                 </span>
-                {activeModel.directional_accuracy < 0.50 ? (
+                {activeModel.directional_accuracy !== undefined && activeModel.directional_accuracy !== null && activeModel.directional_accuracy < 0.50 ? (
                   <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300 block mt-1 text-center">
                     SUB-BASELINE (NEUTRAL DRIFT)
                   </span>
@@ -214,7 +218,9 @@ export const ModelOpsPanel: React.FC<ModelOpsPanelProps> = ({
               <div className="bg-beige-100/60 p-3 rounded-xl border border-beige-200 shadow-xs" title="Percentage of past prices that landed inside the 80% prediction range (Target: ~80% Conformal Calibration)">
                 <span className="text-[10px] text-ink-muted uppercase tracking-wider block">80% Range Accuracy</span>
                 <span className="text-base font-bold text-emerald-700 mt-0.5 block">
-                  {(activeModel.empirical_coverage_80 * 100).toFixed(1)}%
+                  {activeModel.empirical_coverage_80 !== undefined && activeModel.empirical_coverage_80 !== null
+                    ? `${(activeModel.empirical_coverage_80 * 100).toFixed(1)}%`
+                    : "—"}
                 </span>
                 <span className="text-[10px] text-ink-muted block mt-0.5">Target: ~80% CQR</span>
               </div>
@@ -222,7 +228,7 @@ export const ModelOpsPanel: React.FC<ModelOpsPanelProps> = ({
               <div className="bg-beige-100/60 p-3 rounded-xl border border-beige-200 shadow-xs" title="Percentage of past prices that landed inside the 95% prediction range">
                 <span className="text-[10px] text-ink-muted uppercase tracking-wider block">95% Range Accuracy</span>
                 <span className="text-base font-bold text-emerald-700 mt-0.5 block">
-                  {activeModel.empirical_coverage_95
+                  {activeModel.empirical_coverage_95 !== undefined && activeModel.empirical_coverage_95 !== null
                     ? `${(activeModel.empirical_coverage_95 * 100).toFixed(1)}%`
                     : "—"}
                 </span>
@@ -231,7 +237,9 @@ export const ModelOpsPanel: React.FC<ModelOpsPanelProps> = ({
               <div className="bg-beige-100/60 p-3 rounded-xl border border-beige-200 shadow-xs" title="Width of the predicted price band relative to normal historical market volatility">
                 <span className="text-[10px] text-ink-muted uppercase tracking-wider block">Band Tightness</span>
                 <span className="text-base font-bold text-ink-primary mt-0.5 block">
-                  {activeModel.mpiw_80_atr ? `${activeModel.mpiw_80_atr.toFixed(2)}x` : "—"}
+                  {activeModel.mpiw_80_atr !== undefined && activeModel.mpiw_80_atr !== null
+                    ? `${activeModel.mpiw_80_atr.toFixed(2)}x`
+                    : "—"}
                 </span>
               </div>
 
@@ -278,9 +286,21 @@ export const ModelOpsPanel: React.FC<ModelOpsPanelProps> = ({
                   <td className="py-3 px-3 font-semibold text-ink-primary">{m.version_tag}</td>
                   <td className="py-3 px-3 text-ink-secondary">{m.trained_at ? fmtDate(m.trained_at) : m.train_end_date}</td>
                   <td className="py-3 px-3 text-ink-secondary">{m.train_start_date} – {m.train_end_date}</td>
-                  <td className="py-3 px-3 text-ink-primary font-medium">{m.walk_forward_mae.toFixed(2)}%</td>
-                  <td className="py-3 px-3 text-ink-primary font-medium">{(m.directional_accuracy * 100).toFixed(1)}%</td>
-                  <td className="py-3 px-3 text-emerald-700 font-medium">{(m.empirical_coverage_80 * 100).toFixed(1)}%</td>
+                  <td className="py-3 px-3 text-ink-primary font-medium">
+                    {m.walk_forward_mae !== undefined && m.walk_forward_mae !== null
+                      ? `${m.walk_forward_mae.toFixed(2)}%`
+                      : "—"}
+                  </td>
+                  <td className="py-3 px-3 text-ink-primary font-medium">
+                    {m.directional_accuracy !== undefined && m.directional_accuracy !== null
+                      ? `${(m.directional_accuracy * 100).toFixed(1)}%`
+                      : "—"}
+                  </td>
+                  <td className="py-3 px-3 text-emerald-700 font-medium">
+                    {m.empirical_coverage_80 !== undefined && m.empirical_coverage_80 !== null
+                      ? `${(m.empirical_coverage_80 * 100).toFixed(1)}%`
+                      : "—"}
+                  </td>
                   <td className="py-3 px-3">
                     {m.is_active ? (
                       <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-xs">

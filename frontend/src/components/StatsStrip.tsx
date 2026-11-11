@@ -25,7 +25,7 @@ export const StatsStrip: React.FC<StatsStripProps> = ({ stats }) => {
             Average Error (MAE)
           </div>
           <div className="text-xl font-extrabold font-mono text-ink-primary mt-0.5">
-            {stats ? `${stats.mae_pct.toFixed(2)}%` : "—"}
+            {stats?.mae_pct !== undefined && stats?.mae_pct !== null ? `${stats.mae_pct.toFixed(2)}%` : "—"}
           </div>
           <div className="text-[10px] text-ink-muted">vs 2.65% Persistence Baseline</div>
         </div>
@@ -44,7 +44,7 @@ export const StatsStrip: React.FC<StatsStripProps> = ({ stats }) => {
             Trend Accuracy
           </div>
           <div className="text-xl font-extrabold font-mono text-ink-primary mt-0.5 flex items-baseline gap-1.5">
-            <span>{stats ? `${(stats.directional_accuracy * 100).toFixed(1)}%` : "—"}</span>
+            <span>{stats?.directional_accuracy !== undefined && stats?.directional_accuracy !== null ? `${(stats.directional_accuracy * 100).toFixed(1)}%` : "—"}</span>
             {stats && stats.directional_accuracy > 0.5 && (
               <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100/80 px-1.5 py-0.5 rounded-md">
                 +{((stats.directional_accuracy - 0.5) * 100).toFixed(1)}% Edge
@@ -78,7 +78,7 @@ export const StatsStrip: React.FC<StatsStripProps> = ({ stats }) => {
               isCovHealthy ? "text-emerald-700" : "text-amber-700"
             }`}
           >
-            {stats ? `${cov80.toFixed(1)}%` : "—"}
+            {stats && cov80 !== undefined && !isNaN(cov80) ? `${cov80.toFixed(1)}%` : "—"}
           </div>
           <div className="text-[10px] text-ink-muted">Target: ~80% Calibrated Target</div>
         </div>

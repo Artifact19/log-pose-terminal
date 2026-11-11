@@ -70,7 +70,7 @@ export const ConfidencePanel: React.FC<ConfidencePanelProps> = ({ run }) => {
                 <span className="text-[10px] text-ink-muted hidden sm:inline">(vs 50% baseline)</span>
               </span>
               <span className="font-mono font-bold text-ink-primary">
-                {meta.directional_accuracy !== undefined
+                {meta.directional_accuracy !== undefined && meta.directional_accuracy !== null
                   ? `${(meta.directional_accuracy * 100).toFixed(1)}%`
                   : "—"}
               </span>
@@ -81,7 +81,7 @@ export const ConfidencePanel: React.FC<ConfidencePanelProps> = ({ run }) => {
                 style={{ width: `${Math.min(100, Math.max(0, comp.accuracy))}%` }}
               />
             </div>
-            {meta.directional_accuracy !== undefined && meta.directional_accuracy < 0.50 && (
+            {meta.directional_accuracy !== undefined && meta.directional_accuracy !== null && meta.directional_accuracy < 0.50 && (
               <div className="mt-2 p-2 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-800 text-[10.5px] flex items-center gap-1.5">
                 <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
                 <span>
@@ -101,7 +101,7 @@ export const ConfidencePanel: React.FC<ConfidencePanelProps> = ({ run }) => {
                 </span>
               </span>
               <span className="font-mono font-bold text-ink-primary">
-                {meta.picp_80 !== undefined ? `${(meta.picp_80 * 100).toFixed(1)}%` : "—"}
+                {meta.picp_80 !== undefined && meta.picp_80 !== null ? `${(meta.picp_80 * 100).toFixed(1)}%` : "—"}
               </span>
             </div>
             <div className="w-full bg-beige-200/90 h-2.5 rounded-full overflow-hidden shadow-tactile-well p-0.5">
@@ -122,7 +122,7 @@ export const ConfidencePanel: React.FC<ConfidencePanelProps> = ({ run }) => {
                 </span>
               </span>
               <span className="font-mono font-bold text-ink-primary">
-                {meta.mpiw_80_atr !== undefined ? `${meta.mpiw_80_atr.toFixed(2)}x ATR` : "—"}
+                {meta.mpiw_80_atr !== undefined && meta.mpiw_80_atr !== null ? `${meta.mpiw_80_atr.toFixed(2)}x ATR` : "—"}
               </span>
             </div>
             <div className="w-full bg-beige-200/90 h-2.5 rounded-full overflow-hidden shadow-tactile-well p-0.5">
@@ -143,7 +143,7 @@ export const ConfidencePanel: React.FC<ConfidencePanelProps> = ({ run }) => {
                 </span>
               </span>
               <span className="font-mono font-bold text-ink-primary">
-                {meta.regime_vol_z !== undefined ? `${meta.regime_vol_z.toFixed(2)}z` : "—"}
+                {meta.regime_vol_z !== undefined && meta.regime_vol_z !== null ? `${meta.regime_vol_z.toFixed(2)}z` : "—"}
               </span>
             </div>
             <div className="w-full bg-beige-200/90 h-2.5 rounded-full overflow-hidden shadow-tactile-well p-0.5">
@@ -156,7 +156,7 @@ export const ConfidencePanel: React.FC<ConfidencePanelProps> = ({ run }) => {
         </div>
 
         {/* NLP Sentiment Catalyst Tilt (Option A) */}
-        {meta.nlp_sentiment_score !== undefined && (
+        {meta.nlp_sentiment_score !== undefined && meta.nlp_sentiment_score !== null && (
           <div className="mt-4 p-2.5 rounded-2xl bg-beige-100/80 border border-beige-300 flex items-center justify-between text-xs font-mono shadow-2xs">
             <span className="text-ink-secondary flex items-center gap-1.5 font-medium text-[11px]">
               <Sparkles className="w-3.5 h-3.5 text-terracotta-500 shrink-0" />

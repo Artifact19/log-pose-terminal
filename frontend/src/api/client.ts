@@ -24,7 +24,16 @@ import {
 } from "../lib/modelPersistence";
 
 const getApiBase = (): string => {
-  let base = (import.meta.env.VITE_API_BASE_URL || "/api").trim();
+  let base = (import.meta.env.VITE_API_BASE_URL || "").trim();
+  if (base.startsWith("postgresql://") || base.startsWith("postgres://")) {
+    console.warn(
+      "[Log Pose] VITE_API_BASE_URL was set to a postgresql:// database string. Frontend requires an HTTP/HTTPS backend URL. Falling back to production Render backend."
+    );
+    base = "https://log-pose-terminal-api.onrender.com/api";
+  }
+  if (!base) {
+    base = "/api";
+  }
   while (base.endsWith("/")) {
     base = base.slice(0, -1);
   }

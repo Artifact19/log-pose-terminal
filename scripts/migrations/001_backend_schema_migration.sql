@@ -95,6 +95,7 @@ CREATE TABLE IF NOT EXISTS public.forecast_run (
     is_seeded_demo BOOLEAN NOT NULL DEFAULT FALSE
 );
 CREATE INDEX IF NOT EXISTS ix_forecast_run_anchor ON public.forecast_run (anchor_date);
+DROP INDEX IF EXISTS public.ix_run_resolution;
 CREATE INDEX IF NOT EXISTS ix_forecast_run_resolution ON public.forecast_run (resolution_status);
 CREATE INDEX IF NOT EXISTS ix_run_ticker_created ON public.forecast_run (ticker, created_at DESC);
 

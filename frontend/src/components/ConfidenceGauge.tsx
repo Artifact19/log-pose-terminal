@@ -63,7 +63,7 @@ export const ConfidenceGauge: React.FC<ConfidenceGaugeProps> = ({ score, regime 
         {/* Center score readout (Tactile Circular Bezel) */}
         <div className="absolute bottom-0 text-center bg-beige-50 px-4 py-1 rounded-2xl border border-beige-300/80 shadow-tactile-knob">
           <div className="text-3xl font-extrabold font-mono tracking-tight text-ink-primary">
-            {score.toFixed(1)}
+            {typeof score === "number" && !isNaN(score) ? score.toFixed(1) : "—"}
           </div>
           <div className="text-[10px] font-bold uppercase tracking-wider text-ink-muted">
             Score / 100

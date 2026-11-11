@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Plot from "react-plotly.js";
 import { Eye, EyeOff, BarChart2, LineChart } from "lucide-react";
+import { fmtPrice } from "../lib/fmt";
 import type { ForecastRunDetail, GhostRun, OHLCVBar } from "../types";
 
 interface MasterChartProps {
@@ -187,7 +188,7 @@ export const MasterChart: React.FC<MasterChartProps> = ({
             {run.ticker} Price & Forecast Trajectory
           </span>
           <span className="text-xs px-2.5 py-0.5 rounded-lg bg-beige-200/70 font-mono text-ink-secondary border border-beige-300 shadow-2xs">
-            Base: ${run.anchor_close_price.toFixed(2)}
+            Base: {run.anchor_close_price !== undefined && run.anchor_close_price !== null ? fmtPrice(run.anchor_close_price, run.ticker) : "—"}
           </span>
         </div>
 

@@ -172,7 +172,7 @@ export const SentimentPulsePanel: React.FC<SentimentPulsePanelProps> = ({
           </div>
           <div className="flex items-baseline gap-2 mt-1">
             <span className="text-2xl font-bold text-ink-primary">
-              {score > 0 ? `+${score.toFixed(2)}` : score.toFixed(2)}
+              {typeof score === "number" ? (score > 0 ? `+${score.toFixed(2)}` : score.toFixed(2)) : "—"}
             </span>
             <span
               className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border uppercase tracking-wider ${scoreColor}`}
@@ -200,9 +200,11 @@ export const SentimentPulsePanel: React.FC<SentimentPulsePanelProps> = ({
             {isSubBaseline ? (
               <div className="flex items-center gap-1.5">
                 <span className="text-xl font-bold text-terracotta-700">
-                  {sentiment.drift_tilt_pct >= 0
-                    ? `+${sentiment.drift_tilt_pct.toFixed(2)}%`
-                    : `${sentiment.drift_tilt_pct.toFixed(2)}%`}
+                  {typeof sentiment.drift_tilt_pct === "number"
+                    ? (sentiment.drift_tilt_pct >= 0
+                        ? `+${sentiment.drift_tilt_pct.toFixed(2)}%`
+                        : `${sentiment.drift_tilt_pct.toFixed(2)}%`)
+                    : "0.00%"}
                 </span>
                 <span className="text-[9px] font-sans font-semibold px-1.5 py-0.5 rounded bg-terracotta-100 text-terracotta-800 border border-terracotta-200">
                   DRIFT TILT ACTIVE
@@ -211,9 +213,11 @@ export const SentimentPulsePanel: React.FC<SentimentPulsePanelProps> = ({
             ) : (
               <div className="flex items-center gap-1.5">
                 <span className="text-xl font-bold text-emerald-700">
-                  {sentiment.drift_tilt_pct >= 0
-                    ? `+${sentiment.drift_tilt_pct.toFixed(2)}%`
-                    : `${sentiment.drift_tilt_pct.toFixed(2)}%`}
+                  {typeof sentiment.drift_tilt_pct === "number"
+                    ? (sentiment.drift_tilt_pct >= 0
+                        ? `+${sentiment.drift_tilt_pct.toFixed(2)}%`
+                        : `${sentiment.drift_tilt_pct.toFixed(2)}%`)
+                    : "0.00%"}
                 </span>
                 <span className="text-[9px] font-sans font-semibold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">
                   MOMENTUM CONFIRMED
@@ -353,7 +357,7 @@ export const SentimentPulsePanel: React.FC<SentimentPulsePanelProps> = ({
                         <Minus className="w-3 h-3 text-ink-muted" />
                       )}
                       <span>
-                        {art.score > 0 ? `+${art.score.toFixed(2)}` : art.score.toFixed(2)}{" "}
+                        {typeof art.score === "number" ? (art.score > 0 ? `+${art.score.toFixed(2)}` : art.score.toFixed(2)) : "—"}{" "}
                         {art.sentiment}
                       </span>
                     </span>

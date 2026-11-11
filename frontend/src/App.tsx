@@ -121,7 +121,7 @@ function TerminalApp() {
     selectedRun && (!currentTicker || selectedRun.ticker === currentTicker)
       ? selectedRun
       : currentTicker
-      ? ledgerRuns.find((r) => r.ticker === currentTicker) || null
+      ? (Array.isArray(ledgerRuns) ? ledgerRuns.find((r) => r && r.ticker === currentTicker) : null) || null
       : null;
 
   // Run Forecast Mutation

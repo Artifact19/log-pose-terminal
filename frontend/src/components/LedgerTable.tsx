@@ -238,7 +238,9 @@ export const LedgerTable: React.FC<LedgerTableProps> = ({
                         {fmtDate(r.anchor_date)} ({fmtPrice(r.anchor_close_price, r.ticker)})
                       </td>
                       <td className="py-3 px-3 font-semibold text-ink-primary">
-                        {r.confidence_score.toFixed(1)}/100
+                        {r.confidence_score !== undefined && r.confidence_score !== null
+                          ? `${r.confidence_score.toFixed(1)}/100`
+                          : "—"}
                       </td>
                       <td className="py-3 px-3">
                         <span className={`px-2 py-0.5 rounded-md text-[10px] font-medium border ${regimeStyle}`}>

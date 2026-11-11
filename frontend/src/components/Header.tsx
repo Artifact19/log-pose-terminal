@@ -92,10 +92,10 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, health,
                         : "bg-ink-secondary"
                     }`}
                   >
-                    {isAdmin ? <Shield className="w-3 h-3" /> : user.email.slice(0, 2).toUpperCase()}
+                    {isAdmin ? <Shield className="w-3 h-3" /> : (user.email ? user.email.slice(0, 2).toUpperCase() : "U")}
                   </div>
-                  <span className="font-semibold text-ink-primary max-w-[70px] sm:max-w-[100px] truncate" title={user.email}>
-                    {user.email.split("@")[0]}
+                  <span className="font-semibold text-ink-primary max-w-[70px] sm:max-w-[100px] truncate" title={user.email || ""}>
+                    {user.email ? user.email.split("@")[0] : "User"}
                   </span>
                   <button
                     onClick={signOut}
@@ -210,11 +210,11 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, health,
                       : "bg-ink-secondary"
                   }`}
                 >
-                  {isAdmin ? <Shield className="w-3.5 h-3.5" /> : user.email.slice(0, 2).toUpperCase()}
+                  {isAdmin ? <Shield className="w-3.5 h-3.5" /> : (user.email ? user.email.slice(0, 2).toUpperCase() : "U")}
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="font-semibold text-ink-primary max-w-[110px] sm:max-w-[130px] truncate" title={user.email}>
-                    {user.email.split("@")[0]}
+                  <span className="font-semibold text-ink-primary max-w-[110px] sm:max-w-[130px] truncate" title={user.email || ""}>
+                    {user.email ? user.email.split("@")[0] : "User"}
                   </span>
                   {isAdmin && (
                     <span className="px-1.5 py-0.2 rounded-sm bg-terracotta-500 text-white font-bold text-[9px] shadow-2xs shrink-0">

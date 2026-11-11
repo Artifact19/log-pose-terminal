@@ -197,9 +197,11 @@ export const TickerSelectionHub: React.FC<TickerSelectionHubProps> = ({
 }) => {
   // Count how many runs the user has per ticker
   const runCountsByTicker: Record<string, number> = {};
-  recentRuns.forEach((r) => {
-    const t = r.ticker.toUpperCase();
-    runCountsByTicker[t] = (runCountsByTicker[t] || 0) + 1;
+  (Array.isArray(recentRuns) ? recentRuns : []).forEach((r) => {
+    if (r?.ticker) {
+      const t = r.ticker.toUpperCase();
+      runCountsByTicker[t] = (runCountsByTicker[t] || 0) + 1;
+    }
   });
 
   return (
@@ -338,7 +340,9 @@ export const TickerSelectionHub: React.FC<TickerSelectionHubProps> = ({
                         {r.horizon_days} Days
                       </td>
                       <td className="py-3 px-3 font-semibold text-ink-primary">
-                        {r.confidence_score.toFixed(1)}/100
+                        {r.confidence_score !== undefined && r.confidence_score !== null
+                          ? `${r.confidence_score.toFixed(1)}/100`
+                          : "—"}
                       </td>
                       <td className="py-3 px-3">{statusBadge}</td>
                       <td className="py-3 px-3 text-right">
