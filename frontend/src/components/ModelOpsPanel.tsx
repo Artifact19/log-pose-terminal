@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Cpu, RefreshCw, GitBranch, Lock } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { ADMIN_EMAIL } from "../lib/supabase";
 import { fmtDate } from "../lib/fmt";
 import type { ModelVersion } from "../types";
 
@@ -72,7 +73,7 @@ export const ModelOpsPanel: React.FC<ModelOpsPanelProps> = ({
                   ? "console-glow-button text-white disabled:opacity-60"
                   : "tactile-pill text-ink-secondary hover:text-ink-primary"
               }`}
-              title={isAdmin ? "Trigger model walk-forward training & calibration" : "Admin privileges required (arnavraut4567@gmail.com)"}
+              title={isAdmin ? "Trigger model walk-forward training & calibration" : (ADMIN_EMAIL ? `Admin privileges required (${ADMIN_EMAIL})` : "Admin privileges required")}
             >
               {!isAdmin ? (
                 <>

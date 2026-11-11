@@ -32,10 +32,6 @@ import {
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api";
 
-function base64UrlEncode(str: string): string {
-  return btoa(str).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-}
-
 async function getAuthHeader(): Promise<Record<string, string>> {
   if (isSupabaseConfigured && supabase) {
     try {
@@ -43,16 +39,6 @@ async function getAuthHeader(): Promise<Record<string, string>> {
       if (session?.access_token) {
         return { Authorization: `Bearer ${session.access_token}` };
       }
-    } catch {}
-  }
-  const sessionStr = localStorage.getItem("logpose_session_user") || localStorage.getItem("logpose_mock_user");
-  if (sessionStr) {
-    try {
-      const u = JSON.parse(sessionStr);
-      const headerB64 = base64UrlEncode(JSON.stringify({ alg: "HS256", typ: "JWT" }));
-      const payloadB64 = base64UrlEncode(JSON.stringify({ sub: u.id, email: u.email, role: "authenticated" }));
-      const sigB64 = base64UrlEncode(JSON.stringify({ sig: "mock" }));
-      return { Authorization: `Bearer ${headerB64}.${payloadB64}.${sigB64}` };
     } catch {}
   }
   return {};

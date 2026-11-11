@@ -1,8 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { supabase, isSupabaseConfigured } from "../lib/supabase";
+import { supabase, isSupabaseConfigured, ADMIN_EMAIL } from "../lib/supabase";
 
-export const ADMIN_EMAIL = "arnavraut4567@gmail.com";
-export const ADMIN_PASSWORD = "28logpose19";
+export { ADMIN_EMAIL };
 
 export interface AuthUser {
   id: string;
@@ -37,7 +36,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [shouldLaunchTour, setShouldLaunchTour] = useState(false);
 
   useEffect(() => {
-    // 1. If real Supabase credentials are present
     if (isSupabaseConfigured && supabase) {
       supabase.auth.getSession().then(({ data: { session } }) => {
         if (session?.user) {
@@ -47,13 +45,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             user_metadata: session.user.user_metadata,
           });
         } else {
-          // Check local stored session
-          const savedSession = localStorage.getItem("logpose_session_user");
-          if (savedSession) {
-            try {
-              setUser(JSON.parse(savedSession));
-            } catch {}
-          }
+          setUser(null);
         }
         setIsLoading(false);
       });
@@ -66,150 +58,64 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             user_metadata: session.user.user_metadata,
           });
         } else {
-          const savedSession = localStorage.getItem("logpose_session_user");
-          if (savedSession) {
-            try {
-              setUser(JSON.parse(savedSession));
-              return;
-            } catch {}
-          }
           setUser(null);
         }
       });
 
       return () => subscription.unsubscribe();
     } else {
-      // 2. Check localStorage for session
-      const savedSession = localStorage.getItem("logpose_session_user");
-      if (savedSession) {
-        try {
-          setUser(JSON.parse(savedSession));
-        } catch {}
-      }
+      setUser(null);
       setIsLoading(false);
     }
   }, []);
 
   const isAdmin = Boolean(
-    user?.email && user.email.toLowerCase().trim() === ADMIN_EMAIL.toLowerCase().trim()
+    user?.email && ADMIN_EMAIL && user.email.toLowerCase().trim() === ADMIN_EMAIL.toLowerCase().trim()
   );
 
   const signInWithEmail = async (email: string, password: string): Promise<{ error?: string }> => {
     const normEmail = email.toLowerCase().trim();
 
-    // 1. Check for Admin credentials
-    if (normEmail === ADMIN_EMAIL.toLowerCase().trim()) {
-      if (password === ADMIN_PASSWORD) {
-        if (isSupabaseConfigured && supabase) {
-          try {
-            await supabase.auth.signInWithPassword({ email: normEmail, password });
-          } catch {}
-        }
-        const adminUser: AuthUser = {
-          id: "admin-arnavraut",
-          email: ADMIN_EMAIL,
-          user_metadata: { full_name: "Arnav Raut (Admin)" },
-        };
-        setUser(adminUser);
-        localStorage.setItem("logpose_session_user", JSON.stringify(adminUser));
-        setIsAuthModalOpen(false);
-        return {};
-      } else {
-        return { error: "Invalid password for administrator account." };
-      }
+    if (!isSupabaseConfigured || !supabase) {
+      return { error: "Supabase authentication is not configured. Please check environment variables." };
     }
 
-    // 2. Standard user sign in
-    if (isSupabaseConfigured && supabase) {
-      const { data, error } = await supabase.auth.signInWithPassword({ email: normEmail, password });
-      if (error) return { error: error.message };
-      if (data?.user) {
-        setUser({
-          id: data.user.id,
-          email: data.user.email || normEmail,
-          user_metadata: data.user.user_metadata,
-        });
-      }
-      setIsAuthModalOpen(false);
-      return {};
-    } else {
-      // Offline / local fallback
-      const standardUser: AuthUser = {
-        id: `user-${Date.now()}`,
-        email: normEmail,
-        user_metadata: { full_name: normEmail.split("@")[0] },
-      };
-      setUser(standardUser);
-      localStorage.setItem("logpose_session_user", JSON.stringify(standardUser));
-      setIsAuthModalOpen(false);
-      return {};
+    const { data, error } = await supabase.auth.signInWithPassword({ email: normEmail, password });
+    if (error) return { error: error.message };
+    if (data?.user) {
+      setUser({
+        id: data.user.id,
+        email: data.user.email || normEmail,
+        user_metadata: data.user.user_metadata,
+      });
     }
+    setIsAuthModalOpen(false);
+    return {};
   };
 
   const signUpWithEmail = async (email: string, password: string): Promise<{ error?: string }> => {
     const normEmail = email.toLowerCase().trim();
 
-    // 1. Check for Admin credentials
-    if (normEmail === ADMIN_EMAIL.toLowerCase().trim()) {
-      if (password === ADMIN_PASSWORD) {
-        if (isSupabaseConfigured && supabase) {
-          try {
-            await supabase.auth.signUp({ email: normEmail, password });
-          } catch {}
-        }
-        const adminUser: AuthUser = {
-          id: "admin-arnavraut",
-          email: ADMIN_EMAIL,
-          user_metadata: { full_name: "Arnav Raut (Admin)" },
-        };
-        setUser(adminUser);
-        localStorage.setItem("logpose_session_user", JSON.stringify(adminUser));
-        setIsAuthModalOpen(false);
-        const seenKey = `logpose_tour_seen_${ADMIN_EMAIL.toLowerCase().trim()}`;
-        if (!localStorage.getItem(seenKey)) {
-          localStorage.setItem(seenKey, "true");
-          setShouldLaunchTour(true);
-        }
-        return {};
-      } else {
-        return { error: "Invalid password for administrator account." };
-      }
+    if (!isSupabaseConfigured || !supabase) {
+      return { error: "Supabase authentication is not configured. Please check environment variables." };
     }
 
-    // 2. Standard user sign up
-    if (isSupabaseConfigured && supabase) {
-      const { data, error } = await supabase.auth.signUp({ email: normEmail, password });
-      if (error) return { error: error.message };
-      if (data?.user) {
-        setUser({
-          id: data.user.id,
-          email: data.user.email || normEmail,
-          user_metadata: data.user.user_metadata,
-        });
-      }
-      setIsAuthModalOpen(false);
-      const seenKey = `logpose_tour_seen_${normEmail}`;
-      if (!localStorage.getItem(seenKey)) {
-        localStorage.setItem(seenKey, "true");
-        setShouldLaunchTour(true);
-      }
-      return {};
-    } else {
-      const standardUser: AuthUser = {
-        id: `user-${Date.now()}`,
-        email: normEmail,
-        user_metadata: { full_name: normEmail.split("@")[0] },
-      };
-      setUser(standardUser);
-      localStorage.setItem("logpose_session_user", JSON.stringify(standardUser));
-      setIsAuthModalOpen(false);
-      const seenKey = `logpose_tour_seen_${normEmail}`;
-      if (!localStorage.getItem(seenKey)) {
-        localStorage.setItem(seenKey, "true");
-        setShouldLaunchTour(true);
-      }
-      return {};
+    const { data, error } = await supabase.auth.signUp({ email: normEmail, password });
+    if (error) return { error: error.message };
+    if (data?.user) {
+      setUser({
+        id: data.user.id,
+        email: data.user.email || normEmail,
+        user_metadata: data.user.user_metadata,
+      });
     }
+    setIsAuthModalOpen(false);
+    const seenKey = `logpose_tour_seen_${normEmail}`;
+    if (!localStorage.getItem(seenKey)) {
+      localStorage.setItem(seenKey, "true");
+      setShouldLaunchTour(true);
+    }
+    return {};
   };
 
   const signInWithOAuth = async (provider: "google" | "github"): Promise<{ error?: string }> => {

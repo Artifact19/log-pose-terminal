@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session
 from backend.app.db import get_session
 from backend.app.repositories.forecast_repo import forecast_repo
+from backend.app.api.rate_limiter import rate_limit_reconcile
 from backend.app.schemas.api import (
     ForecastPointDetail,
     ForecastRunDetail,
@@ -174,6 +175,6 @@ def get_ledger_run(run_id: uuid.UUID, session: Session = Depends(get_session)):
 
 
 @router.post("/reconcile")
-def manual_reconcile(req: ReconcileRequest):
+def manual_reconcile(req: ReconcileRequest, _rate_limit=Depends(rate_limit_reconcile)):
     counts = reconciliation_service.resolve_pending_forecasts(ticker=req.ticker)
     return counts

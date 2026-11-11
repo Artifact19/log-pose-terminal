@@ -17,10 +17,16 @@ class Settings:
         self.RETRAIN_COVERAGE_FLOOR: float = float(os.getenv("RETRAIN_COVERAGE_FLOOR", "0.65"))
         self.RETRAIN_LOOKBACK_DAYS: int = int(os.getenv("RETRAIN_LOOKBACK_DAYS", "10"))
         self.CORS_ORIGINS: str = os.getenv("CORS_ORIGINS", "http://localhost:5173")
-        self.ENV: str = os.getenv("ENV", "dev")
+        self.ENV: str = os.getenv("ENV", "production")
         self.ADMIN_EMAIL: str = os.getenv("ADMIN_EMAIL", "arnavraut4567@gmail.com")
-        self.ADMIN_PASSWORD: str = os.getenv("ADMIN_PASSWORD", "28logpose19")
+        self.SUPABASE_URL: str = os.getenv("SUPABASE_URL", os.getenv("VITE_SUPABASE_URL", ""))
         self.SUPABASE_JWT_SECRET: str = os.getenv("SUPABASE_JWT_SECRET", "")
+        supported_tickers_raw = os.getenv(
+            "SUPPORTED_TICKERS", "AAPL,NVDA,MSFT,SPY,RELIANCE.NS,TCS.NS"
+        )
+        self.SUPPORTED_TICKERS: list[str] = [
+            t.strip().upper() for t in supported_tickers_raw.split(",") if t.strip()
+        ]
         self.DISCLAIMER: str = (
             "Log Pose Terminal is for research and forward-testing "
             "purposes only. Not financial advice."

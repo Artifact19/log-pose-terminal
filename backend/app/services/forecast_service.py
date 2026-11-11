@@ -48,6 +48,10 @@ class ForecastService:
                 need_train = True
 
         if need_train:
+            if t not in settings.SUPPORTED_TICKERS:
+                raise ValueError(
+                    f"Ticker '{t}' is not supported for automated model training. Supported tickers: {', '.join(settings.SUPPORTED_TICKERS)}"
+                )
             train_horizon = max(getattr(settings, "MAX_HORIZON", 20), h)
             retrain_res = retrain_service.trigger_retrain(t, force=True, as_of=as_of, horizon=train_horizon)
             with Session(engine) as session:

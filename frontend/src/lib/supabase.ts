@@ -25,5 +25,5 @@ export const supabase: SupabaseClient = isSupabaseConfigured
     })
   : (null as unknown as SupabaseClient);
 
-export const ADMIN_EMAIL = "arnavraut4567@gmail.com";
+export const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL || "";
 

@@ -1,6 +1,8 @@
 import uuid
 from fastapi import APIRouter, HTTPException, Depends
 from sqlmodel import Session
+from backend.app.api.rate_limiter import rate_limit_forecast
+from backend.app.config import settings
 from backend.app.db import get_session
 from backend.app.repositories.forecast_repo import forecast_repo
 from backend.app.schemas.api import ForecastPointDetail, ForecastRequest, ForecastRunDetail
@@ -10,7 +12,7 @@ router = APIRouter()
 
 
 @router.post("/forecast", response_model=ForecastRunDetail)
-def create_forecast(req: ForecastRequest):
+def create_forecast(req: ForecastRequest, _rate_limit=Depends(rate_limit_forecast)):
     try:
         run, points, bars = forecast_service.create_forecast(
             ticker=req.ticker,
@@ -18,6 +20,10 @@ def create_forecast(req: ForecastRequest):
             as_of=req.as_of,
             force_new=bool(req.force_new),
         )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Forecast generation failed: {e}")
 
