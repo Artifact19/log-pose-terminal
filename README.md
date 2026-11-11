@@ -1,326 +1,264 @@
 # Log Pose Terminal
 
-> Production-grade multi-horizon equity forecasting system with causal feature engineering, split conformal prediction intervals, and an immutable walk-forward settlement ledger.
+> Production-grade multi-horizon equity forecasting terminal with causal feature engineering, split conformal prediction intervals (CQR), and an immutable walk-forward settlement ledger.
 
 ---
 
-## 1. System Overview & Core Engineering Principles
+## 1. System Overview & Engineering Architecture
 
-Log Pose Terminal is an auditable quantitative forecasting platform designed to solve the three fundamental failure modes of machine learning in financial time series: **lookahead leakage**, **overconfident point estimates**, and **unverifiable backtest claims**.
+Log Pose Terminal is an auditable quantitative forecasting platform designed to eliminate the three classic pitfalls of machine learning in financial time series: **lookahead leakage**, **overconfident point estimates**, and **unverifiable backtest claims**.
 
 ```mermaid
 flowchart TD
-    subgraph Research["1. Research Layer (Jupyter Source of Truth)"]
-        NB1["01_feature_engineering.ipynb<br/>(Causal Feature Pipeline)"]
-        NB2["02_model_architecture.ipynb<br/>(Direct Multi-Horizon Regressors)"]
-        NB3["03_uncertainty_and_evaluation.ipynb<br/>(Conformal Calibration & Walk-Forward)"]
+    subgraph Research["1. Research Layer (Jupyter Notebooks)"]
+        NB1["01_feature_engineering.ipynb<br/>(18 Causal Features)"]
+        NB2["02_model_architecture.ipynb<br/>(Direct Multi-Horizon XGBoost)"]
+        NB3["03_uncertainty_and_evaluation.ipynb<br/>(Conformal CQR & Holdout Evaluation)"]
     end
 
     subgraph Bridge["2. Deterministic Sync Bridge"]
         SYNC["scripts/sync_notebooks.py<br/>(AST #| export extractor)"]
-        MANIFEST["exported_manifest.json<br/>(SHA-256 Checksums)"]
+        MANIFEST["exported_manifest.json<br/>(Cryptographic SHA-256 Checksums)"]
         PROD_MOD["exported_features.py<br/>exported_model.py<br/>exported_uncertainty.py"]
     end
 
-    subgraph Service["3. Production Backend (FastAPI + SQLModel)"]
-        CORE["app/ml_core/pipeline.py<br/>(Execution Orchestrator)"]
+    subgraph Backend["3. Production Backend (Render / FastAPI)"]
+        CORE["app/ml_core/pipeline.py<br/>(Pipeline Orchestrator)"]
         CAL["Calendar Service<br/>(pandas_market_calendars)"]
-        DATA["Data Service<br/>(yfinance + Parquet Cache)"]
+        DATA["Data Service<br/>(yfinance + Direct Chart Fallback + Cache)"]
         RECON["Reconciliation Worker<br/>(Automated Settlement)"]
-        DB[(Immutable Ledger<br/>SQLite / PostgreSQL)]
+        RETRAIN["Retrain Worker<br/>(Background DB-tracked Jobs)"]
     end
 
-    subgraph Client["4. Terminal Interface (React + Vite + Plotly)"]
-        UI["Interactive Dashboard"]
+    subgraph Persistence["4. Supabase Cloud Persistence"]
+        DB[(PostgreSQL Ledger<br/>Session Pooler via psycopg)]
+        STORAGE[(Supabase Storage<br/>TICKER/version_tag/bundle.joblib)]
+        AUTH[Supabase Auth<br/>JWKS & HS256 RS256 Verification]
+    end
+
+    subgraph Client["5. Terminal Client (Vercel / React + Vite + Plotly)"]
+        UI["Tactile Quant Terminal"]
         CHART["MasterChart: Price + Conformal Cones + Historical Traces"]
         SCORE["Live Scorecard & Audit Ledger"]
-        OPS["Model Lineage & Retrain Lifecycle"]
+        PULSE["Market Pulse & NLP Sentiment"]
+        OPS["Model Lineage & Async Retrain Lifecycle"]
     end
 
     NB1 & NB2 & NB3 -->|AST Extraction| SYNC
     SYNC --> MANIFEST & PROD_MOD
     PROD_MOD --> CORE
-    CORE --> Service
-    Service <--> DB
-    Service --> Client
+    CORE --> Backend
+    Backend <--> Persistence
+    Backend --> Client
 ```
 
 ### Core Architecture Tenets
 
 1. **Notebooks as Single Source of Truth:**
-   All machine learning mathematical code, feature formulas, loss functions, and conformal bounds are developed inside interactive Jupyter notebooks (`notebooks/*.ipynb`). A static AST parser exports designated cells (`#| export`) into production modules guarded by cryptographic SHA-256 manifests. Direct edits to exported production files fail continuous integration.
+   All machine learning mathematical code, feature equations, loss functions, and conformal bounds are developed inside interactive Jupyter notebooks (`notebooks/*.ipynb`). A static AST parser exports designated cells (`#| export`) into production modules guarded by cryptographic SHA-256 manifests. Direct manual edits to exported production files fail CI verification.
 2. **Strict Zero-Lookahead Policy:**
-   Features are computed strictly using causal filtration: `X_t = f({P_s | s <= t})`. No future data enters rolling estimators, z-score scalers, or volatility estimators. Automated regression tests verify that perturbing `t+1` market data leaves feature values at `t` completely unchanged.
+   Features are computed strictly using causal filtration: $X_t = f(\{P_s \mid s \le t\})$. No future information enters rolling estimators, z-score scalers, or volatility estimators. If the market is open when fetching data, the unfinished intraday bar is dropped automatically until the exchange regular session closes. Automated regression tests verify that perturbing $t+1$ market data leaves feature values at $t$ completely unchanged.
 3. **Direct Multi-Horizon Forecasting:**
-   Rather than compounding prediction errors through autoregressive single-step rollouts, the system fits independent direct estimators for each target trading horizon: `h ∈ {1, 2, 3, 5}` trading days.
-4. **Distribution-Free Uncertainty Quantification:**
-   Point forecasts are paired with adaptive split conformal prediction intervals (`PICP_80` and `PICP_95`). Intervals adapt dynamically to prevailing market volatility and historical residual distributions without parametric Gaussian assumptions.
+   Rather than compounding prediction errors through autoregressive single-step rollouts, the system fits independent direct estimators for each target trading horizon: $h \in \{1, \dots, H\}$ (where $H$ is up to 20 trading days, default 5). Training only the requested horizon bounds resource usage.
+4. **Distribution-Free Uncertainty Quantification (CQR):**
+   Point forecasts are paired with adaptive split conformal prediction intervals (`PICP_80` and `PICP_95`). The 80% interval uses Conformalized Quantile Regression (CQR), while the 95% interval uses calibrated absolute residuals. Intervals adapt dynamically to prevailing market volatility and historical residual distributions without parametric Gaussian assumptions.
 5. **Immutable Forward-Testing Ledger:**
-   Every published prediction is permanently recorded with an anchor timestamp, model version identifier, and point-in-time close price prior to target market sessions. A background worker reconciles forecasts against actual exchange closes, computing realized MAE, directional accuracy, and interval coverage.
+   Every published prediction is permanently recorded with an anchor timestamp, model version identifier, and point-in-time close price prior to target market sessions. A reconciliation service settles forecasts against realized exchange closes, computing realized MAE, directional accuracy, and interval coverage.
 
 ---
 
 ## 2. Mathematical Formulation & ML Methodology
 
-### 2.1 Causal Feature Engineering
+### 2.1 The 18 Causal Features
 
-The feature store transforms raw OHLCV price series into a normalized feature matrix:
+The feature store transforms raw OHLCV price series into exactly 18 normalized, causal features (defined in `exported_features.py`):
 
-- **Log Returns:**
-  ```text
-  r_t = ln(P_t / P_{t-1})
-  ```
+| # | Feature Name | Formula / Description |
+| :--- | :--- | :--- |
+| 1 | `ret_1d` | 1-day log return: $\ln(C_t / C_{t-1})$ |
+| 2 | `ret_3d` | 3-day cumulative log return: $\ln(C_t / C_{t-3})$ |
+| 3 | `ret_5d` | 5-day cumulative log return: $\ln(C_t / C_{t-5})$ |
+| 4 | `ret_10d` | 10-day cumulative log return: $\ln(C_t / C_{t-10})$ |
+| 5 | `ret_20d` | 20-day cumulative log return: $\ln(C_t / C_{t-20})$ |
+| 6 | `mom_5d` | 5-day rolling mean of 1-day log return |
+| 7 | `mom_20d` | 20-day rolling mean of 1-day log return |
+| 8 | `vol_parkinson_20d` | 20-day Parkinson High-Low volatility: $\sqrt{\frac{1}{4 \ln 2 \cdot 20} \sum_{i=0}^{19} \ln(H_{t-i}/L_{t-i})^2}$ |
+| 9 | `vol_yz_20d` | 20-day Yang-Zhang volatility (overnight + open-to-close + Rogers-Satchell drift-independent component) |
+| 10 | `rsi_14` | Wilder-smoothed 14-period Relative Strength Index normalized to $[0, 1]$ via `ewm(alpha=1/14)` |
+| 11 | `macd_hist` | MACD histogram normalized by Close: $(EMA_{12}(C) - EMA_{26}(C) - EMA_9(MACD)) / C_t$ |
+| 12 | `bb_width` | 20-day Bollinger Band width: $(4 \cdot \sigma_{20}(C)) / SMA_{20}(C)$ |
+| 13 | `vol_z20` | 20-day rolling z-score of log volume: $(\ln(1+V_t) - \mu_{20}) / \sigma_{20}$ |
+| 14 | `vol_ratio_5_20` | Short-to-medium volatility regime ratio: $\sigma_5(\text{ret\_1d}) / \sigma_{20}(\text{ret\_1d})$ |
+| 15 | `vol_ratio_20_60` | Medium-to-long volatility regime ratio: $\sigma_{20}(\text{ret\_1d}) / \sigma_{60}(\text{ret\_1d})$ |
+| 16 | `atr_14_pct` | Wilder 14-period Average True Range normalized as percentage of Close: $ATR_{14} / C_t$ |
+| 17 | `dow_sin` | Cyclic calendar day-of-week sine encoding: $\sin(2\pi \cdot \text{DOW} / 5)$ |
+| 18 | `dow_cos` | Cyclic calendar day-of-week cosine encoding: $\cos(2\pi \cdot \text{DOW} / 5)$ |
 
-- **Yang-Zhang Historical Volatility:** Multi-period estimator independent of drift and opening jumps:
-  ```text
-  σ_YZ² = σ_overnight² + k * σ_open² + (1 - k) * σ_RS²
-  where k = 0.34 / (1.34 + (n + 1) / (n - 1))
-  ```
+*(Note: EMA20/50 price ratios, SPY returns, and rolling beta are intentionally excluded to keep the feature pipeline asset-independent and prevent cross-asset data alignment leakage).*
 
-- **Technical Momentum & Trend:**
-  - Relative Strength Index: `RSI_14(t)`
-  - Moving Average Convergence Divergence: `MACD(12, 26, 9)`
-  - Exponential Moving Average Ratios: `P_t / EMA_20(t) - 1`, `P_t / EMA_50(t) - 1`
-  - Normalized Average True Range: `NATR_14(t) = ATR_14(t) / P_t`
+### 2.2 Quantile Loss & Multi-Horizon Regressors
 
-- **Macro Interaction:** Log returns of the benchmark index (`r_SPY,t`) and rolling beta:
-  ```text
-  β_t = Cov(r_asset, r_SPY) / Var(r_SPY)
-  ```
+For each forward step $h \in \{1, \dots, H\}$, point predictions minimize RMSE while lower and upper bounds optimize the pinball loss function across 3 quantiles: $q \in \{0.10, 0.50, 0.90\}$:
 
-### 2.2 Quantile Loss & Pinball Optimization
+$$\mathcal{L}_q(y, \hat{y}_q) = \max\left( q(y - \hat{y}_q), (q - 1)(y - \hat{y}_q) \right)$$
 
-For each horizon `h`, point predictions minimize Root Mean Squared Error (RMSE) while probabilistic bounds optimize the pinball loss function for quantile levels `q ∈ {0.10, 0.25, 0.50, 0.75, 0.90}`:
+Gradient-boosted decision trees (XGBoost) train direct models per horizon. Quantile monotonicity is strictly enforced post-inference:
+$$\hat{y}_{0.10} \le \hat{y}_{0.50} \le \hat{y}_{0.90}$$
 
-```text
-L_q(y, ŷ_q) = max( q * (y - ŷ_q),  (q - 1) * (y - ŷ_q) )
-```
+### 2.3 Uncertainty Quantification & Split Conformal Prediction (CQR)
 
-Gradient boosted decision tree ensembles (XGBoost) optimize `L_q` directly. Quantile monotonicity is strictly enforced post-inference:
+To guarantee marginal empirical coverage without assuming Gaussian residuals:
+1. **80% Prediction Interval:** Calibrated using Conformalized Quantile Regression (CQR). Nonconformity scores measure the degree to which true prices violate the estimated 10th and 90th quantiles:
+   $$E_i = \max(\hat{q}_{0.10}(X_i) - y_i, \, y_i - \hat{q}_{0.90}(X_i))$$
+   The conformal adjustment $Q_{1-\alpha}(E)$ expands or contracts the interval:
+   $$\hat{C}_{80}(X_{t+h}) = \left[ \hat{q}_{0.10}(X_{t+h}) - Q_{0.80}(E), \; \hat{q}_{0.90}(X_{t+h}) + Q_{0.80}(E) \right]$$
+2. **95% Prediction Interval:** Built from calibrated absolute point residuals:
+   $$\hat{C}_{95}(X_{t+h}) = \left[ \hat{y}(X_{t+h}) - Q_{0.95}(|y - \hat{y}|), \; \hat{y}(X_{t+h}) + Q_{0.95}(|y - \hat{y}|) \right]$$
+   Nesting is strictly enforced: $\hat{C}_{80} \subseteq \hat{C}_{95}$.
+3. **Adaptive Conformal Inference (ACI):** When $\ge 20$ live resolved forecasts exist in the ledger, the live empirical 80% coverage feeds into an online feedback loop to adaptively tilt conformal quantile boundaries.
 
-```text
-q_0.10 <= q_0.25 <= q_0.50 <= q_0.75 <= q_0.90
-```
+### 2.4 Honest Walk-Forward Validation & Baselines
 
-### 2.3 Split Conformal Prediction
-
-To ensure valid empirical coverage under finite samples without assuming Gaussian residuals, prediction intervals are calibrated using locally weighted split conformal prediction:
-
-1. **Nonconformity Score:**
-   ```text
-   s_i = |y_i - ŷ_i| / σ_i
-   ```
-   where `σ_i` is the local volatility proxy (NATR).
-
-2. **Conformal Quantile:**
-   For a desired significance level `δ ∈ {0.20, 0.05}` (corresponding to 80% and 95% nominal coverage):
-   ```text
-   k_(1-δ) = Quantile( 1 - δ,  {s_i | i ∈ D_calib} ) * ((n + 1) / n)
-   ```
-
-3. **Calibrated Interval:**
-   ```text
-   C_(1-δ)(X_t+h) = [ ŷ_t+h - k_(1-δ) * σ_t+h,   ŷ_t+h + k_(1-δ) * σ_t+h ]
-   ```
-
-This guarantees marginal empirical coverage:
-```text
-P( Y_t+h ∈ C_(1-δ)(X_t+h) ) >= 1 - δ
-```
-
-### 2.4 Purged Walk-Forward Cross-Validation with Embargo
-
-Time series cross-validation uses expanding walk-forward splits with purging and embargoing:
-- **Purging:** Training observations whose forward label window overlaps with test observations are excluded.
-- **Embargo:** An embargo period equal to the maximum horizon `h_max = 5` days is placed immediately after test folds to prevent autoregressive information leakage through autoregressive features.
+Walk-forward validation uses expanding splits with purging:
+- **Purging:** Training observations whose label window overlaps with test observations are excluded (`train_end + purge <= test_start`).
+- **Embargo:** The `embargo` parameter is kept for API compatibility, but is unused in expanding walk-forward splits because folds strictly train on historical data and test on subsequent out-of-sample data.
+- **Holdout Conformal Evaluation:** The conformal calibrator is fit on earlier validation folds (e.g., folds 1–6), and true empirical PICP/MPIW coverage metrics are evaluated strictly on unseen holdout folds (folds 7–8).
+- **Benchmarked Baselines:** Every model version explicitly tracks:
+  - **Always-Up Directional Accuracy:** Directional accuracy of always predicting a positive return.
+  - **Zero-Return MAE:** Mean absolute error of predicting zero return ($P_{t+h} = P_t$).
 
 ---
 
-## 3. Repository Structure
+## 3. Deployment Architecture
 
-```text
-├── notebooks/                      # Single source of truth for ML math
-│   ├── 01_feature_engineering.ipynb          # Causal indicators & zero-lookahead checks
-│   ├── 02_model_architecture.ipynb            # XGBoost point & quantile regressors
-│   └── 03_uncertainty_and_evaluation.ipynb    # Conformal calibration & walk-forward CV
-├── backend/
-│   ├── app/
-│   │   ├── api/routes/            # REST API (forecast, ledger, models, retrain)
-│   │   ├── ml_core/               # Exported modules & AST sync manifest
-│   │   │   ├── contracts.py       # Typed interfaces for ML pipelines
-│   │   │   ├── exported_*.py      # Auto-generated from notebooks
-│   │   │   └── manifest.py        # Cryptographic checksum validator
-│   │   ├── models/tables.py       # SQLModel ORM entities (ModelVersion, ForecastRun)
-│   │   ├── repositories/          # Data access layer
-│   │   └── services/              # Calendar, data ingestion, settlement, retrain
-│   └── tests/                     # Test suite (lookahead, purge, conformal, API)
-├── frontend/                       # Interactive web terminal
-│   ├── src/
-│   │   ├── components/            # MasterChart, ForecastTable, Scorecard, ModelOps
-│   │   ├── api/client.ts          # Typed REST client
-│   │   └── types/index.ts         # TypeScript schema definitions
-├── scripts/
-│   ├── sync_notebooks.py          # AST extraction bridge (#| export)
-│   ├── seed_demo.py               # Database seeder for demo symbols
-│   └── verify_system.py           # 8-step end-to-end verification script
-├── Makefile                       # Development task automation
-└── pytest.ini                     # Pytest environment configuration
+The production stack is deployed across three managed tiers:
+
 ```
+┌─────────────────────────────────────────────────────────────┐
+│                    Vercel (Frontend SPA)                    │
+│   React 18 + Vite + Plotly + Tailwind + Vercel Functions    │
+│   • Demo banner on backend cold start / downtime            │
+│   • Relative routing for /api/sentiment (Vercel serverless) │
+└──────────────────────────────┬──────────────────────────────┘
+                               │ HTTPS API Requests (120s timeout)
+┌──────────────────────────────▼──────────────────────────────┐
+│                    Render (Backend API)                     │
+│   FastAPI + Uvicorn + Python 3.12 (Free Web Service)        │
+│   • Asynchronous background training (returns 202 Job ID)   │
+│   • Per-IP rate limiting on expensive mutation routes       │
+│   • Background session reconciliation worker                │
+└──────────────┬──────────────────────────────┬───────────────┘
+               │                              │
+┌──────────────▼──────────────┐┌──────────────▼───────────────┐
+│     Supabase PostgreSQL     ││       Supabase Storage       │
+│   Session Pooler (Port 6543)││   Bucket: model-artifacts    │
+│   forecast_run, forecast_pt ││   {TICKER}/{version_tag}/    │
+│   retrain_job, model_version││   bundle.joblib              │
+└─────────────────────────────┘└──────────────────────────────┘
+```
+
+### Cold Starts & Resilience
+- **Render Cold Start:** Render free tier instances spin down after inactivity. On initial load, the frontend sends a background ping to `/api/health` and displays a tactile `"Waking up forecasting server…"` indicator. Heavy requests (`/api/forecast`, `/api/retrain`) use a 120-second timeout, while light GETs use a 12-second timeout.
+- **Demo Mode Banner:** If the backend is unreachable or waking, the frontend falls back to simulated forecasts marked `is_seeded_demo=true`. A prominent banner warns that predictions are simulated, and mock forecasts are never written to the shared database.
+- **Single Source of Truth:** All runs, points, ghosts, and model scores are read exclusively from the backend database. Browser-side mock reconciliation is disabled.
 
 ---
 
-## 4. Quickstart & Installation
+## 4. Environment Variables Reference
 
-### 4.1 Prerequisites
-- **Python 3.10+** (Python 3.12 recommended)
-- **Node.js 18+** and **npm**
-- **Git**
+### Render Backend (Web Service)
 
-### 4.2 Local Environment Setup
+| Variable | Description |
+| :--- | :--- |
+| `ENV` | Environment mode (`production` or `dev`). Must be `production` in live deployments. |
+| `DATABASE_URL` | Supabase PostgreSQL transaction/session pooler connection string (`postgresql+psycopg://...`). |
+| `SUPABASE_URL` | Supabase project API URL (`https://<project-ref>.supabase.co`). |
+| `SUPABASE_JWT_SECRET` | Secret key for verifying HS256 Supabase user JWT tokens. |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service-role secret key (backend only) for Storage artifact uploads. |
+| `ARTIFACT_BUCKET` | Supabase Storage bucket name for serialized model joblibs (default: `model-artifacts`). |
+| `ADMIN_EMAIL` | Email address authorized for administrative actions (e.g. pre-training and sync checks). |
+| `SUPPORTED_TICKERS` | Comma-separated list of tickers eligible for on-demand training (default: `AAPL,NVDA,MSFT,SPY,RELIANCE.NS,TCS.NS`). |
+| `CORS_ORIGINS` | Comma-separated allowed frontend origins (e.g. `https://log-pose-terminal.vercel.app,http://localhost:5173`). |
+| `CORS_ORIGIN_REGEX` | Regular expression for preview deployments (e.g. `^https://.*\.vercel\.app$`). |
+| `DEFAULT_HORIZON` | Forward prediction horizon in trading sessions (default: `5`). |
+| `MAX_HORIZON` | Maximum forward horizon permitted (default: `20`). |
+| `RETRAIN_COVERAGE_FLOOR` | Minimum live coverage floor triggering retrain (default: `0.65`). |
+| `RETRAIN_ACTIVATION_COVERAGE` | Minimum validation coverage required to activate a newly retrained model (default: `0.70`). |
+| `XGBOOST_N_JOBS` | Thread count for XGBoost training (default: `2`). |
+
+### Vercel Frontend (Project Settings)
+
+| Variable | Description |
+| :--- | :--- |
+| `VITE_API_BASE_URL` | Full URL to the Render backend ending in `/api` (e.g. `https://log-pose-terminal.onrender.com/api`). |
+| `VITE_SUPABASE_URL` | Supabase project URL (`https://<project-ref>.supabase.co`). |
+| `VITE_SUPABASE_ANON_KEY` | Supabase public anonymous API key for client-side authentication. |
+| `VITE_ADMIN_EMAIL` | Admin email address used to show administrative UI controls in the terminal. |
+
+---
+
+## 5. Local Setup & Quickstart
+
+### 5.1 Installation
 
 ```bash
-# Clone the repository
+# 1. Clone repository
 git clone https://github.com/Artifact19/log-pose-terminal.git
 cd log-pose-terminal
 
-# Setup Python virtual environment
+# 2. Setup backend virtual environment
 python -m venv backend/.venv
 
-# Windows Powershell:
+# Windows PowerShell:
 .\backend\.venv\Scripts\Activate.ps1
-# macOS / Linux:
+# Linux / macOS:
 # source backend/.venv/bin/activate
 
-# Install backend dependencies
+# 3. Install backend dependencies
 pip install -r backend/requirements.txt
 
-# Install frontend dependencies
+# 4. Install frontend dependencies
 cd frontend
 npm install
 cd ..
 ```
 
-### 4.3 Verify Sync & Seed Database
+### 5.2 Verification & Running Services
 
 ```bash
-# Verify that production code matches notebook source of truth
+# Verify notebook exports match production code
 python scripts/sync_notebooks.py --check
 
-# Seed initial models and historical ghost runs (AAPL, SPY, RELIANCE.NS)
-python scripts/seed_demo.py
-```
+# Run backend unit & integration tests
+pytest backend/tests -v
 
-### 4.4 Run Services
+# Start FastAPI backend (port 8000)
+uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 --reload
 
-#### Terminal 1 — Backend API (FastAPI)
-```bash
-python -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 --reload
-```
-- Interactive Swagger Documentation: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
-- Health Check: [http://127.0.0.1:8000/api/health](http://127.0.0.1:8000/api/health)
-
-#### Terminal 2 — Frontend Terminal (Vite + React)
-```bash
+# Start Vite React frontend (port 5173) in a second terminal
 cd frontend
 npm run dev
 ```
-- Web Application: [http://localhost:5173](http://localhost:5173)
 
----
-
-## 5. Verification & Testing
-
-### 5.1 End-to-End System Audit
-Run the automated end-to-end audit verifying all 8 production criteria:
+### 5.3 Automated System Audit
+Run the end-to-end audit verifying all 7 production verification checks:
 ```bash
 python scripts/verify_system.py
 ```
 
-Expected output:
-```text
-======================================================================
-LOG POSE TERMINAL END-TO-END VERIFICATION
-======================================================================
-[PASS] 1. Notebook Exports Sync Check         | Exports match notebook cells
-[PASS] 2. Active Model Available & Valid      | Version: v20261103T151217Z
-[PASS] 3. Backdated Forecast Creation         | Anchored run generated
-[PASS] 4. Reconciliation & Idempotency        | 5/5 resolved, status=RESOLVED, 2nd run=0 new
-[PASS] 5. Live Ledger Scorecard Stats         | Realized MAE, Hit Rate, 80% Coverage computed
-[PASS] 6. Retraining & Lineage Immutability   | New version activated, historical artifact intact
-[PASS] 7. Methodology Drift Detection         | Checksum drift correctly flagged
-======================================================================
-OVERALL STATUS: ALL CHECKS PASSED (100%)
-======================================================================
-```
-
-### 5.2 Unit & Integration Test Suite
-```bash
-pytest backend/tests -v
-```
-
-Test coverage includes:
-- `test_lookahead.py`: Strict invariance of historical feature values under future price shocks.
-- `test_walkforward_purge.py`: Non-overlapping fold splits with `h_max` embargo verification.
-- `test_conformal.py`: Quantile non-crossing (`q_10 <= q_50 <= q_90`) and empirical coverage bounds.
-- `test_sync_notebooks.py`: AST cell extraction, checksum calculation, and tamper prevention.
-- `test_calendar_alignment.py`: NYSE/NSE session alignment, weekend skipping, and holiday handling.
-- `test_reconciliation.py`: Forward settlement against realized prices with idempotency checks.
-- `test_api.py`: FastAPI endpoint contracts and error handling.
+Checks executed:
+1. Notebook exports sync check & manifest integrity
+2. Active model availability & serialization
+3. Backdated forecast generation with causal alignment
+4. Idempotent forward reconciliation against actual market closes
+5. Live ledger scorecard metric calculations (MAE, Directional Accuracy, Coverage)
+6. Model retraining, performance gating, and immutable lineage preservation
+7. Methodology drift detection and automated invalidation
 
 ---
 
-## 6. Model Retraining & Research Lifecycle
+## 6. Regulatory & Research Disclaimer
 
-To update model architecture or features, follow the research-to-production workflow:
+**LOG POSE TERMINAL IS FOR RESEARCH AND QUANTITATIVE FORWARD-TESTING PURPOSES ONLY. NOT FINANCIAL ADVICE.**
 
-```mermaid
-sequenceDiagram
-    participant Research as notebooks/*.ipynb
-    participant Sync as scripts/sync_notebooks.py
-    participant Manifest as exported_manifest.json
-    participant API as FastAPI /api/retrain
-    participant Storage as artifacts/ & DB
-
-    Research->>Sync: Extract #| export cells
-    Sync->>Manifest: Compute SHA-256 digest
-    Sync->>Storage: Generate exported_*.py
-    API->>Storage: Validate manifest integrity
-    API->>Storage: Train walk-forward model
-    API->>Storage: Persist model artifact (vYYYYMMDDTHHMMSSZ)
-    API->>Storage: Update model lineage pointer
-```
-
-1. **Modify Research Code:** Open `notebooks/` in Jupyter and modify feature formulas or hyperparameter grids within cells marked `#| export`.
-2. **Execute Sync Bridge:**
-   ```bash
-   python scripts/sync_notebooks.py
-   ```
-3. **Trigger Model Recalibration:**
-   ```bash
-   curl -X POST http://127.0.0.1:8000/api/retrain \
-        -H "Content-Type: application/json" \
-        -d '{"ticker": "AAPL", "force": false}'
-   ```
-   A new model version (`vYYYYMMDDTHHMMSSZ`) is instantiated and evaluated. If walk-forward validation passes performance gates (MAE reduction and nominal interval coverage >= 65%), the new version is activated. Historical versions and binary artifacts remain immutable.
-
----
-
-## 7. Environment Configuration
-
-| Variable | Default | Purpose |
-| :--- | :--- | :--- |
-| `DATABASE_URL` | `sqlite:///./ledger.db` | SQLModel database connection string (SQLite or PostgreSQL) |
-| `ARTIFACT_DIR` | `./artifacts` | Storage directory for serialized model binaries (`.joblib`) |
-| `CACHE_DIR` | `./cache` | Storage directory for Parquet market data cache |
-| `DEFAULT_HORIZON` | `5` | Default forward forecast horizon in trading sessions |
-| `DEFAULT_TRAIN_YEARS` | `8` | Historical lookback window for model training |
-| `RETRAIN_COVERAGE_FLOOR` | `0.65` | Minimum validation coverage required to activate retrained model |
-| `CORS_ORIGINS` | `http://localhost:5173` | Allowed CORS origins for frontend client |
-
----
-
-## 8. Regulatory & Research Disclaimer
-
-**LOG POSE TERMINAL IS FOR RESEARCH AND FORWARD-TESTING PURPOSES ONLY. NOT FINANCIAL ADVICE.**
-
-All forecasts, expected trajectories, and prediction intervals are statistical estimates subject to estimation variance, regime transitions, and data vendor limitations. The platform does not constitute an offer or recommendation to buy or sell securities. Past backtested or forward-tested performance does not guarantee future results.
+All forecasts, trajectories, and prediction bands are statistical estimates subject to model error, regime changes, and data vendor outages. Past backtested or forward-tested results do not guarantee future performance.
