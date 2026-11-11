@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import date, datetime
 from typing import Any, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class ForecastRequest(BaseModel):
@@ -57,15 +57,15 @@ class LedgerStatsResponse(BaseModel):
 
 
 class ForecastPointDetail(BaseModel):
-    id: Optional[int]
+    id: Optional[int] = None
     step_ahead: int
     target_trading_date: date
     predicted_return: float
     predicted_close: float
     lower_80: float
     upper_80: float
-    lower_95: float
-    upper_95: float
+    lower_95: Optional[float] = None
+    upper_95: Optional[float] = None
     actual_close: Optional[float] = None
     actual_return: Optional[float] = None
     abs_error: Optional[float] = None
@@ -79,18 +79,29 @@ class ForecastPointDetail(BaseModel):
 class ForecastRunDetail(BaseModel):
     id: uuid.UUID
     ticker: str
-    model_version_id: int
+    model_version_id: Optional[int] = None
     created_at: datetime
     anchor_date: date
     anchor_close_price: float
     horizon_days: int
     confidence_score: float
     regime_status: str
-    confidence_metadata: dict
+    confidence_metadata: dict = Field(default_factory=dict)
     resolution_status: str
-    is_seeded_demo: bool
+    is_seeded_demo: bool = False
     points: list[ForecastPointDetail] = []
     history_bars: Optional[list[OHLCVBar]] = None
+
+    @field_validator("confidence_metadata", mode="before")
+    @classmethod
+    def parse_confidence_metadata(cls, v: Any) -> dict:
+        if isinstance(v, str):
+            import json
+            try:
+                return json.loads(v)
+            except Exception:
+                return {}
+        return v if isinstance(v, dict) else {}
 
 
 class GhostRunPoint(BaseModel):

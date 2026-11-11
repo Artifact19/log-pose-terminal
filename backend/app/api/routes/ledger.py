@@ -41,46 +41,49 @@ def list_ledger_runs(
 
     results = []
     for r in runs:
-        pts = forecast_repo.get_run_points(session, r.id)
-        pts_detail = [
-            ForecastPointDetail(
-                id=p.id,
-                step_ahead=p.step_ahead,
-                target_trading_date=p.target_trading_date,
-                predicted_return=p.predicted_return,
-                predicted_close=p.predicted_close,
-                lower_80=p.lower_80,
-                upper_80=p.upper_80,
-                lower_95=p.lower_95,
-                upper_95=p.upper_95,
-                actual_close=p.actual_close,
-                actual_return=p.actual_return,
-                abs_error=p.abs_error,
-                pct_error=p.pct_error,
-                direction_correct=p.direction_correct,
-                inside_80_band=p.inside_80_band,
-                inside_95_band=p.inside_95_band,
-                resolved_at=p.resolved_at,
+        try:
+            pts = forecast_repo.get_run_points(session, r.id)
+            pts_detail = [
+                ForecastPointDetail(
+                    id=p.id,
+                    step_ahead=p.step_ahead,
+                    target_trading_date=p.target_trading_date,
+                    predicted_return=p.predicted_return if p.predicted_return is not None else 0.0,
+                    predicted_close=p.predicted_close if p.predicted_close is not None else 0.0,
+                    lower_80=p.lower_80 if p.lower_80 is not None else 0.0,
+                    upper_80=p.upper_80 if p.upper_80 is not None else 0.0,
+                    lower_95=p.lower_95,
+                    upper_95=p.upper_95,
+                    actual_close=p.actual_close,
+                    actual_return=p.actual_return,
+                    abs_error=p.abs_error,
+                    pct_error=p.pct_error,
+                    direction_correct=p.direction_correct,
+                    inside_80_band=p.inside_80_band,
+                    inside_95_band=p.inside_95_band,
+                    resolved_at=p.resolved_at,
+                )
+                for p in pts
+            ]
+            results.append(
+                ForecastRunDetail(
+                    id=r.id,
+                    ticker=r.ticker,
+                    model_version_id=r.model_version_id,
+                    created_at=r.created_at,
+                    anchor_date=r.anchor_date,
+                    anchor_close_price=r.anchor_close_price,
+                    horizon_days=r.horizon_days,
+                    confidence_score=r.confidence_score,
+                    regime_status=r.regime_status,
+                    confidence_metadata=r.confidence_metadata or {},
+                    resolution_status=r.resolution_status,
+                    is_seeded_demo=bool(r.is_seeded_demo),
+                    points=pts_detail,
+                )
             )
-            for p in pts
-        ]
-        results.append(
-            ForecastRunDetail(
-                id=r.id,
-                ticker=r.ticker,
-                model_version_id=r.model_version_id,
-                created_at=r.created_at,
-                anchor_date=r.anchor_date,
-                anchor_close_price=r.anchor_close_price,
-                horizon_days=r.horizon_days,
-                confidence_score=r.confidence_score,
-                regime_status=r.regime_status,
-                confidence_metadata=r.confidence_metadata or {},
-                resolution_status=r.resolution_status,
-                is_seeded_demo=r.is_seeded_demo,
-                points=pts_detail,
-            )
-        )
+        except Exception as exc:
+            logger.error(f"Error mapping run {r.id}: {exc}")
     return results
 
 
@@ -146,10 +149,10 @@ def get_ledger_run(run_id: uuid.UUID, session: Session = Depends(get_session)):
             id=p.id,
             step_ahead=p.step_ahead,
             target_trading_date=p.target_trading_date,
-            predicted_return=p.predicted_return,
-            predicted_close=p.predicted_close,
-            lower_80=p.lower_80,
-            upper_80=p.upper_80,
+            predicted_return=p.predicted_return if p.predicted_return is not None else 0.0,
+            predicted_close=p.predicted_close if p.predicted_close is not None else 0.0,
+            lower_80=p.lower_80 if p.lower_80 is not None else 0.0,
+            upper_80=p.upper_80 if p.upper_80 is not None else 0.0,
             lower_95=p.lower_95,
             upper_95=p.upper_95,
             actual_close=p.actual_close,
@@ -175,7 +178,7 @@ def get_ledger_run(run_id: uuid.UUID, session: Session = Depends(get_session)):
         regime_status=run.regime_status,
         confidence_metadata=run.confidence_metadata or {},
         resolution_status=run.resolution_status,
-        is_seeded_demo=run.is_seeded_demo,
+        is_seeded_demo=bool(run.is_seeded_demo),
         points=pts_detail,
     )
 

@@ -174,7 +174,6 @@ async function request<T>(
 
       if (fallbackGenerator) {
         console.warn(`[Log Pose] API error (${errorDetail}). Using local engine fallback.`);
-        setBackendState(false, true);
         return fallbackGenerator();
       }
       throw new Error(errorDetail);
