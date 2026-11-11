@@ -77,7 +77,6 @@ CREATE TABLE IF NOT EXISTS public.model_version (
     is_active BOOLEAN NOT NULL DEFAULT FALSE,
     CONSTRAINT uq_ticker_version UNIQUE (ticker, version_tag)
 );
-CREATE INDEX IF NOT EXISTS ix_model_version_ticker ON public.model_version (ticker);
 CREATE INDEX IF NOT EXISTS ix_model_version_active ON public.model_version (ticker, is_active);
 
 -- (b) forecast_run
@@ -95,7 +94,6 @@ CREATE TABLE IF NOT EXISTS public.forecast_run (
     resolution_status VARCHAR(32) NOT NULL DEFAULT 'PENDING',
     is_seeded_demo BOOLEAN NOT NULL DEFAULT FALSE
 );
-CREATE INDEX IF NOT EXISTS ix_forecast_run_ticker ON public.forecast_run (ticker);
 CREATE INDEX IF NOT EXISTS ix_forecast_run_anchor ON public.forecast_run (anchor_date);
 CREATE INDEX IF NOT EXISTS ix_forecast_run_resolution ON public.forecast_run (resolution_status);
 CREATE INDEX IF NOT EXISTS ix_run_ticker_created ON public.forecast_run (ticker, created_at DESC);
@@ -122,7 +120,6 @@ CREATE TABLE IF NOT EXISTS public.forecast_point (
     resolved_at TIMESTAMPTZ,
     CONSTRAINT uq_run_step UNIQUE (forecast_run_id, step_ahead)
 );
-CREATE INDEX IF NOT EXISTS ix_forecast_point_run_id ON public.forecast_point (forecast_run_id);
 CREATE INDEX IF NOT EXISTS ix_point_unresolved ON public.forecast_point (actual_close, target_trading_date);
 
 -- (d) retrain_job
@@ -183,31 +180,56 @@ CREATE POLICY "Allow public read on retrain_job"
     ON public.retrain_job FOR SELECT
     USING (true);
 
--- Backend Service Role has full bypass authority in Supabase.
--- Disallow all anon INSERT/UPDATE/DELETE.
--- Optional admin modification policies for dashboard maintenance using optimized auth check:
-CREATE POLICY "Allow admin write on model_version"
-    ON public.model_version FOR ALL
-    TO authenticated
-    USING ((((SELECT auth.jwt()) ->> 'email') = 'arnavraut4567@gmail.com'))
-    WITH CHECK ((((SELECT auth.jwt()) ->> 'email') = 'arnavraut4567@gmail.com'));
+-- Backend Service Role / direct connection pooler has full bypass authority in Supabase.
+-- Disallow anon INSERT/UPDATE/DELETE.
+-- Dedicated admin mutation policies (INSERT, UPDATE, DELETE) to avoid overlapping permissive SELECT policies:
 
-CREATE POLICY "Allow admin write on forecast_run"
-    ON public.forecast_run FOR ALL
-    TO authenticated
+-- (a) model_version
+CREATE POLICY "Allow admin insert on model_version"
+    ON public.model_version FOR INSERT TO authenticated
+    WITH CHECK ((((SELECT auth.jwt()) ->> 'email') = 'arnavraut4567@gmail.com'));
+CREATE POLICY "Allow admin update on model_version"
+    ON public.model_version FOR UPDATE TO authenticated
     USING ((((SELECT auth.jwt()) ->> 'email') = 'arnavraut4567@gmail.com'))
     WITH CHECK ((((SELECT auth.jwt()) ->> 'email') = 'arnavraut4567@gmail.com'));
+CREATE POLICY "Allow admin delete on model_version"
+    ON public.model_version FOR DELETE TO authenticated
+    USING ((((SELECT auth.jwt()) ->> 'email') = 'arnavraut4567@gmail.com'));
 
-CREATE POLICY "Allow admin write on forecast_point"
-    ON public.forecast_point FOR ALL
-    TO authenticated
+-- (b) forecast_run
+CREATE POLICY "Allow admin insert on forecast_run"
+    ON public.forecast_run FOR INSERT TO authenticated
+    WITH CHECK ((((SELECT auth.jwt()) ->> 'email') = 'arnavraut4567@gmail.com'));
+CREATE POLICY "Allow admin update on forecast_run"
+    ON public.forecast_run FOR UPDATE TO authenticated
     USING ((((SELECT auth.jwt()) ->> 'email') = 'arnavraut4567@gmail.com'))
     WITH CHECK ((((SELECT auth.jwt()) ->> 'email') = 'arnavraut4567@gmail.com'));
+CREATE POLICY "Allow admin delete on forecast_run"
+    ON public.forecast_run FOR DELETE TO authenticated
+    USING ((((SELECT auth.jwt()) ->> 'email') = 'arnavraut4567@gmail.com'));
 
-CREATE POLICY "Allow admin write on retrain_job"
-    ON public.retrain_job FOR ALL
-    TO authenticated
+-- (c) forecast_point
+CREATE POLICY "Allow admin insert on forecast_point"
+    ON public.forecast_point FOR INSERT TO authenticated
+    WITH CHECK ((((SELECT auth.jwt()) ->> 'email') = 'arnavraut4567@gmail.com'));
+CREATE POLICY "Allow admin update on forecast_point"
+    ON public.forecast_point FOR UPDATE TO authenticated
     USING ((((SELECT auth.jwt()) ->> 'email') = 'arnavraut4567@gmail.com'))
     WITH CHECK ((((SELECT auth.jwt()) ->> 'email') = 'arnavraut4567@gmail.com'));
+CREATE POLICY "Allow admin delete on forecast_point"
+    ON public.forecast_point FOR DELETE TO authenticated
+    USING ((((SELECT auth.jwt()) ->> 'email') = 'arnavraut4567@gmail.com'));
+
+-- (d) retrain_job
+CREATE POLICY "Allow admin insert on retrain_job"
+    ON public.retrain_job FOR INSERT TO authenticated
+    WITH CHECK ((((SELECT auth.jwt()) ->> 'email') = 'arnavraut4567@gmail.com'));
+CREATE POLICY "Allow admin update on retrain_job"
+    ON public.retrain_job FOR UPDATE TO authenticated
+    USING ((((SELECT auth.jwt()) ->> 'email') = 'arnavraut4567@gmail.com'))
+    WITH CHECK ((((SELECT auth.jwt()) ->> 'email') = 'arnavraut4567@gmail.com'));
+CREATE POLICY "Allow admin delete on retrain_job"
+    ON public.retrain_job FOR DELETE TO authenticated
+    USING ((((SELECT auth.jwt()) ->> 'email') = 'arnavraut4567@gmail.com'));
 
 COMMIT;
