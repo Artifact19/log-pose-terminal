@@ -118,7 +118,19 @@ export interface ModelVersion {
   mpiw_80_atr?: number | null;
   artifact_path: string;
   notebook_hash: string;
-  metrics_json?: any;
+  metrics_json?: {
+    baseline_always_up_da?: number | null;
+    baseline_zero_return_mae?: number | null;
+    per_horizon?: Array<{
+      horizon: number;
+      mae_price_pct: number;
+      directional_accuracy: number;
+      picp_80: number;
+      da_always_up?: number | null;
+      mae_zero_return?: number | null;
+    }>;
+    [key: string]: any;
+  } | null;
   is_active: boolean;
 }
 

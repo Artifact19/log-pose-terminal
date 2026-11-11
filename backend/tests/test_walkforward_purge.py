@@ -47,3 +47,10 @@ def test_walkforward_purging_and_embargo():
     assert summary.n_oos_obs == n_splits * test_size
     assert len(summary.per_horizon) == H
 
+    # Verify honest holdout evaluation and baselines
+    assert summary.baseline_always_up_da is not None
+    assert summary.baseline_zero_return_mae is not None
+    assert summary.per_horizon[0].da_always_up is not None
+    assert summary.per_horizon[0].mae_zero_return is not None
+    assert 0.0 <= summary.empirical_coverage_80 <= 1.0
+

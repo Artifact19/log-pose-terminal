@@ -186,7 +186,11 @@ export const ModelOpsPanel: React.FC<ModelOpsPanelProps> = ({
                 <span className="text-base font-bold text-ink-primary mt-0.5 block">
                   {activeModel.walk_forward_mae.toFixed(2)}%
                 </span>
-                <span className="text-[10px] text-ink-muted block mt-0.5">vs 2.65% Persistence</span>
+                <span className="text-[10px] text-ink-muted block mt-0.5">
+                  vs {activeModel.metrics_json?.baseline_zero_return_mae !== undefined && activeModel.metrics_json?.baseline_zero_return_mae !== null
+                    ? `${activeModel.metrics_json.baseline_zero_return_mae.toFixed(2)}% Zero-Ret`
+                    : "2.65% Persistence"}
+                </span>
               </div>
 
               <div className="bg-beige-100/60 p-3 rounded-xl border border-beige-200 shadow-xs" title="Percentage of times the model correctly anticipated whether the stock moved up or down (Benchmark: 50.0% Random Walk)">
@@ -199,7 +203,11 @@ export const ModelOpsPanel: React.FC<ModelOpsPanelProps> = ({
                     SUB-BASELINE (NEUTRAL DRIFT)
                   </span>
                 ) : (
-                  <span className="text-[10px] text-ink-muted block mt-0.5">vs 50% Random Walk</span>
+                  <span className="text-[10px] text-ink-muted block mt-0.5">
+                    vs {activeModel.metrics_json?.baseline_always_up_da !== undefined && activeModel.metrics_json?.baseline_always_up_da !== null
+                      ? `${(activeModel.metrics_json.baseline_always_up_da * 100).toFixed(1)}% Always-Up`
+                      : "50% Random Walk"}
+                  </span>
                 )}
               </div>
 
