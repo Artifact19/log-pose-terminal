@@ -23,7 +23,18 @@ import {
   getStoredModels,
 } from "../lib/modelPersistence";
 
-export const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api";
+const getApiBase = (): string => {
+  let base = (import.meta.env.VITE_API_BASE_URL || "/api").trim();
+  while (base.endsWith("/")) {
+    base = base.slice(0, -1);
+  }
+  if (base && !base.endsWith("/api")) {
+    base = `${base}/api`;
+  }
+  return base;
+};
+
+export const API_BASE = getApiBase();
 
 export interface BackendState {
   isWakingUp: boolean;
