@@ -65,6 +65,8 @@ class HorizonMetrics(BaseModel):
     picp_80: float
     picp_95: float
     mpiw_80: float
+    da_always_up: Optional[float] = None
+    mae_zero_return: Optional[float] = None
 
 
 class EvaluationSummary(BaseModel):
@@ -82,6 +84,8 @@ class EvaluationSummary(BaseModel):
     per_horizon: list[HorizonMetrics]
     train_start_date: date
     train_end_date: date
+    baseline_always_up_da: Optional[float] = None
+    baseline_zero_return_mae: Optional[float] = None
 
 
 class FeatureFrame(BaseModel):

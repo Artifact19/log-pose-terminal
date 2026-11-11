@@ -82,3 +82,17 @@ class ForecastPoint(SQLModel, table=True):
     inside_80_band: Optional[bool] = None
     inside_95_band: Optional[bool] = None
     resolved_at: Optional[datetime] = None
+
+
+class RetrainJob(SQLModel, table=True):
+    __tablename__ = "retrain_job"
+
+    id: str = Field(primary_key=True)
+    ticker: str = Field(index=True)
+    stage: str = Field(default="PENDING")
+    progress_fold: int = Field(default=0)
+    total_folds: int = Field(default=8)
+    diff: Optional[dict] = Field(default=None, sa_column=Column(JSONType))
+    error: Optional[str] = None
+    created_at: datetime = Field(default_factory=utc_now)
+    updated_at: datetime = Field(default_factory=utc_now)

@@ -1,0 +1,41 @@
+services:
+  - type: web
+    name: log-pose-terminal-api
+    runtime: python
+    plan: free
+    region: oregon
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.4
+      - key: ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_JWT_SECRET
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: ARTIFACT_BUCKET
+        value: model-artifacts
+      - key: ADMIN_EMAIL
+        value: arnavraut4567@gmail.com
+      - key: CORS_ORIGINS
+        value: http://localhost:5173,http://localhost:8000,https://log-pose-terminal.vercel.app
+      - key: CORS_ORIGIN_REGEX
+        value: ^https://.*\.vercel\.app$
+      - key: SUPPORTED_TICKERS
+        value: AAPL,NVDA,MSFT,SPY,RELIANCE.NS,TCS.NS
+      - key: XGBOOST_N_JOBS
+        value: "2"
+      - key: DEFAULT_HORIZON
+        value: "5"
+      - key: MAX_HORIZON
+        value: "20"
+      - key: RETRAIN_COVERAGE_FLOOR
+        value: "0.65"
+      - key: RETRAIN_ACTIVATION_COVERAGE
+        value: "0.70"

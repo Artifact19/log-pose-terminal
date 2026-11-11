@@ -27,6 +27,9 @@ class Settings:
         self.ADMIN_EMAIL: str = os.getenv("ADMIN_EMAIL", "arnavraut4567@gmail.com")
         self.SUPABASE_URL: str = os.getenv("SUPABASE_URL", os.getenv("VITE_SUPABASE_URL", ""))
         self.SUPABASE_JWT_SECRET: str = os.getenv("SUPABASE_JWT_SECRET", "")
+        self.SUPABASE_SERVICE_ROLE_KEY: str = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
+        self.ARTIFACT_BUCKET: str = os.getenv("ARTIFACT_BUCKET", "model-artifacts")
+        self.XGBOOST_N_JOBS: int = int(os.getenv("XGBOOST_N_JOBS", "2"))
         supported_tickers_raw = os.getenv(
             "SUPPORTED_TICKERS", "AAPL,NVDA,MSFT,SPY,RELIANCE.NS,TCS.NS"
         )

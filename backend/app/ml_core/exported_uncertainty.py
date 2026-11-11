@@ -1,5 +1,5 @@
 """AUTO-GENERATED from 03_uncertainty_and_evaluation.ipynb by scripts/sync_notebooks.py. DO NOT EDIT.
-Source notebook sha256: 981e457d363f3305db3b14d34d2be4f4635106b3ad9a408571abdd355a8e5871
+Source notebook sha256: 487ad2405c5b28c14aabcbe7b00f7fa4d72fd50bacdf8d6981fe6e0b97acf9c7
 Edit the notebook, then run: python scripts/sync_notebooks.py
 """
 # ruff: noqa
@@ -118,7 +118,7 @@ class WalkForwardEvaluator:
         self.embargo = embargo
         self.purge = purge
 
-    def run(self, model: Any, X: pd.DataFrame, Y: pd.DataFrame) -> tuple[OOSResults, EvaluationSummary, ConformalCalibrator]:
+    def run(self, model: Any, X: pd.DataFrame, Y: pd.DataFrame, progress_callback: Any = None) -> tuple[OOSResults, EvaluationSummary, ConformalCalibrator]:
         n_rows = len(X)
         H = Y.shape[1]
         req_len = self.min_train + self.n_splits * self.test_size + self.purge + self.embargo
@@ -164,6 +164,8 @@ class WalkForwardEvaluator:
             oos_dates.extend([pd.Timestamp(d).date() for d in X_te.index])
             oos_folds.append(np.full(len(X_te), fold))
             total_folds_run += 1
+            if progress_callback:
+                progress_callback(total_folds_run, actual_splits)
 
         if total_folds_run == 0:
             raise RuntimeError(f"Not enough data to run walk-forward validation: n_rows={n_rows}")
@@ -183,24 +185,52 @@ class WalkForwardEvaluator:
             fold_ids=fold_ids_all
         )
 
-        calibrator = ConformalCalibrator(horizon=H, interval_method="cqr")
-        calibrator.fit(y_true_all, y_point_all, q_lo_all, q_hi_all)
+        # Partition into calibration folds and holdout folds for honest evaluation
+        unique_folds = np.unique(fold_ids_all)
+        if len(unique_folds) >= 4:
+            n_holdout = min(2, max(1, len(unique_folds) // 4))
+            cutoff_fold = unique_folds[-n_holdout]
+            cal_mask = fold_ids_all < cutoff_fold
+            eval_mask = fold_ids_all >= cutoff_fold
+        else:
+            cal_mask = np.ones(len(fold_ids_all), dtype=bool)
+            eval_mask = np.ones(len(fold_ids_all), dtype=bool)
 
-        intervals = calibrator.intervals(y_point_all, q_lo_all, q_hi_all)
+        calibrator = ConformalCalibrator(horizon=H, interval_method="cqr")
+        calibrator.fit(
+            y_true_all[cal_mask],
+            y_point_all[cal_mask],
+            q_lo_all[cal_mask],
+            q_hi_all[cal_mask]
+        )
+
+        # Evaluate conformal intervals and metrics on holdout folds
+        intervals = calibrator.intervals(
+            y_point_all[eval_mask],
+            q_lo_all[eval_mask],
+            q_hi_all[eval_mask]
+        )
         lo80, hi80 = intervals[0.80]
         lo95, hi95 = intervals[0.95]
+        y_true_eval = y_true_all[eval_mask]
+        y_point_eval = y_point_all[eval_mask]
 
-        # Calculate metrics
+        # Calculate metrics and baselines per horizon
         per_horizon = []
         for h in range(H):
-            mae_r = float(np.mean(np.abs(y_true_all[:, h] - y_point_all[:, h])))
-            rmse_r = float(np.sqrt(np.mean((y_true_all[:, h] - y_point_all[:, h]) ** 2)))
-            # Price % MAE: |exp(r_hat - r) - 1|
-            mae_pct = float(np.mean(np.abs(np.exp(y_point_all[:, h] - y_true_all[:, h]) - 1.0)) * 100.0)
-            da = float(np.mean(np.sign(y_point_all[:, h]) == np.sign(y_true_all[:, h])))
-            p80 = picp(y_true_all[:, h], lo80[:, h], hi80[:, h])
-            p95 = picp(y_true_all[:, h], lo95[:, h], hi95[:, h])
+            mae_r = float(np.mean(np.abs(y_true_eval[:, h] - y_point_eval[:, h])))
+            rmse_r = float(np.sqrt(np.mean((y_true_eval[:, h] - y_point_eval[:, h]) ** 2)))
+            mae_pct = float(np.mean(np.abs(np.exp(y_point_eval[:, h] - y_true_eval[:, h]) - 1.0)) * 100.0)
+            da = float(np.mean(np.sign(y_point_eval[:, h]) == np.sign(y_true_eval[:, h])))
+            p80 = picp(y_true_eval[:, h], lo80[:, h], hi80[:, h])
+            p95 = picp(y_true_eval[:, h], lo95[:, h], hi95[:, h])
             m80 = mpiw(lo80[:, h], hi80[:, h])
+
+            # Baselines:
+            # (a) Always-Up: predict sign > 0
+            da_always_up = float(np.mean(y_true_eval[:, h] > 0))
+            # (b) Zero-Return: predict return = 0
+            mae_zero = float(np.mean(np.abs(np.exp(-y_true_eval[:, h]) - 1.0)) * 100.0)
 
             per_horizon.append(HorizonMetrics(
                 horizon=h + 1,
@@ -210,7 +240,9 @@ class WalkForwardEvaluator:
                 directional_accuracy=da,
                 picp_80=p80,
                 picp_95=p95,
-                mpiw_80=m80
+                mpiw_80=m80,
+                da_always_up=da_always_up,
+                mae_zero_return=mae_zero
             ))
 
         wf_mae = float(np.mean([m.mae_price_pct for m in per_horizon]))
@@ -239,7 +271,9 @@ class WalkForwardEvaluator:
             sharpe_directional=sharpe,
             per_horizon=per_horizon,
             train_start_date=pd.Timestamp(X.index[0]).date(),
-            train_end_date=pd.Timestamp(X.index[-1]).date()
+            train_end_date=pd.Timestamp(X.index[-1]).date(),
+            baseline_always_up_da=float(np.mean([m.da_always_up for m in per_horizon])),
+            baseline_zero_return_mae=float(np.mean([m.mae_zero_return for m in per_horizon]))
         )
 
         return oos_results, summary, calibrator

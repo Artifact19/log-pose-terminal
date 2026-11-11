@@ -1,8 +1,8 @@
 {
   "notebooks": {
     "01_feature_engineering.ipynb": "b4aa86106d3451e6d3f63c8e344c78f6c6da72855268f95e44589f9793ba220d",
-    "02_model_architecture.ipynb": "4bfb48741110e89a4622b37f76425319467538b4bc0fa896d32ed0b353f85e76",
-    "03_uncertainty_and_evaluation.ipynb": "981e457d363f3305db3b14d34d2be4f4635106b3ad9a408571abdd355a8e5871"
+    "02_model_architecture.ipynb": "9d3237ba716b9ec555164dd819726ac049d12594609b3d0ef3ffc79267a3c4a9",
+    "03_uncertainty_and_evaluation.ipynb": "487ad2405c5b28c14aabcbe7b00f7fa4d72fd50bacdf8d6981fe6e0b97acf9c7"
   },
   "modules": {
     "features": {
@@ -14,15 +14,15 @@
     "model": {
       "file": "exported_model.py",
       "source_notebook": "02_model_architecture.ipynb",
-      "notebook_sha": "4bfb48741110e89a4622b37f76425319467538b4bc0fa896d32ed0b353f85e76",
-      "file_sha": "ee2afeaed436e2311452faed750c0533c1213c81648704d015335972039d9b53"
+      "notebook_sha": "9d3237ba716b9ec555164dd819726ac049d12594609b3d0ef3ffc79267a3c4a9",
+      "file_sha": "2ac3dc4722bd017a59fca00b9b81b95d14c416fac94161c051bec20b62f5927a"
     },
     "uncertainty": {
       "file": "exported_uncertainty.py",
       "source_notebook": "03_uncertainty_and_evaluation.ipynb",
-      "notebook_sha": "981e457d363f3305db3b14d34d2be4f4635106b3ad9a408571abdd355a8e5871",
-      "file_sha": "6e28c14039c9a22216dfcb0c02b9ff97ed8c3d1119207146254b655104a05d19"
+      "notebook_sha": "487ad2405c5b28c14aabcbe7b00f7fa4d72fd50bacdf8d6981fe6e0b97acf9c7",
+      "file_sha": "b3dc40f044bd0ffe6b0383f46a1c21bf3437b50470f7ee1d75dea1ddf9b66603"
     }
   },
-  "combined_notebook_hash": "396a56746d11cddf5f108309e80d6594dc48c02ece2f4128f1510ce7f4947353"
+  "combined_notebook_hash": "e4727518e4428d7b23f9475f53115e59b82e05e015743fc0b7dca007862800bc"
 }

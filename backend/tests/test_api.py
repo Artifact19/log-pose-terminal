@@ -83,3 +83,27 @@ async def test_ledger_stats_empty():
         assert res.status_code == 200
         data = res.json()
         assert data["resolved_count"] == 0
+
+
+@pytest.mark.asyncio
+async def test_admin_data_check_unauthenticated():
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        res = await ac.get("/api/admin/data-check")
+        assert res.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_retrain_returns_202(monkeypatch):
+    monkeypatch.setattr(settings, "SUPABASE_JWT_SECRET", TEST_SECRET)
+    token = _create_token(settings.ADMIN_EMAIL, TEST_SECRET)
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        res = await ac.post(
+            "/api/retrain",
+            json={"ticker": "AAPL", "force": False},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert res.status_code == 202
+        data = res.json()
+        assert "job_id" in data

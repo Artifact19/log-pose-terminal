@@ -77,6 +77,7 @@ def train(
     horizon: int = 5,
     version_tag: Optional[str] = None,
     artifact_base_dir: Optional[Path] = None,
+    progress_callback: Optional[Any] = None,
 ) -> TrainResult:
     """Run walk-forward evaluation, fit final model, calibrate intervals, and save bundle."""
     m = load_methodology()
@@ -98,7 +99,9 @@ def train(
     # Walk-forward evaluation and conformal calibration
     base_model = m.model_mod.ForecastModel(horizon=horizon)
     evaluator = m.uncertainty_mod.WalkForwardEvaluator(embargo=horizon, purge=horizon)
-    oos_results, eval_summary, calibrator = evaluator.run(base_model, frame.X, frame.Y)
+    oos_results, eval_summary, calibrator = evaluator.run(
+        base_model, frame.X, frame.Y, progress_callback=progress_callback
+    )
 
     # Fit final model on all labeled data
     final_model = m.model_mod.ForecastModel(horizon=horizon)

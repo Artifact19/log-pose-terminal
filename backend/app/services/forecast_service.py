@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import logging
 import uuid
 from datetime import date, datetime, timedelta, timezone
 from typing import Optional
 
 import joblib
 import pandas as pd
+from fastapi import HTTPException
 from sqlmodel import Session
 
 from backend.app.config import settings
@@ -15,10 +17,13 @@ from backend.app.models.tables import ForecastPoint, ForecastRun
 from backend.app.repositories.forecast_repo import forecast_repo
 from backend.app.repositories.model_repo import model_repo
 from backend.app.schemas.api import OHLCVBar
+from backend.app.services.artifact_service import artifact_service
 from backend.app.services.calendar_service import project_trading_dates
 from backend.app.services.data_service import data_service
 from backend.app.services.reconciliation_service import reconciliation_service
 from backend.app.services.retrain_service import retrain_service
+
+logger = logging.getLogger("forecast_service")
 
 
 class ForecastService:
@@ -38,27 +43,30 @@ class ForecastService:
         with Session(engine) as session:
             active_model = model_repo.get_active(session, t)
 
-        need_train = active_model is None
-        if active_model is not None:
-            try:
-                b_meta = joblib.load(active_model.artifact_path)
-                if b_meta.get("horizon", 5) < h:
-                    need_train = True
-            except Exception:
-                need_train = True
-
-        if need_train:
+        if active_model is None:
             if t not in settings.SUPPORTED_TICKERS:
                 raise ValueError(
                     f"Ticker '{t}' is not supported for automated model training. Supported tickers: {', '.join(settings.SUPPORTED_TICKERS)}"
                 )
-            train_horizon = max(getattr(settings, "MAX_HORIZON", 20), h)
-            retrain_res = retrain_service.trigger_retrain(t, force=True, as_of=as_of, horizon=train_horizon)
-            with Session(engine) as session:
-                active_model = model_repo.get_active(session, t)
+            train_horizon = min(max(h, settings.DEFAULT_HORIZON), settings.MAX_HORIZON)
+            job_info = retrain_service.trigger_retrain(t, force=True, as_of=as_of, horizon=train_horizon)
+            raise HTTPException(
+                status_code=202,
+                detail=f"No active model found for {t}. Automated training job '{job_info['job_id']}' initiated in background. Please try again shortly.",
+            )
 
-        if active_model is None:
-            raise RuntimeError(f"Could not initialize or find an active model for {t}")
+        # Ensure artifact is downloaded/cached locally from Supabase Storage
+        local_artifact = artifact_service.ensure_local_artifact(
+            t, active_model.version_tag, active_model.artifact_path
+        )
+
+        try:
+            b_meta = joblib.load(local_artifact)
+            if b_meta.get("horizon", 5) < h and t in settings.SUPPORTED_TICKERS:
+                train_horizon = min(max(h, settings.DEFAULT_HORIZON), settings.MAX_HORIZON)
+                retrain_service.trigger_retrain(t, force=True, as_of=as_of, horizon=train_horizon)
+        except Exception as e:
+            logger.debug(f"Could not check model metadata for horizon: {e}")
 
         # Fetch market data up to as_of
         start_date = (as_of or date.today()) - timedelta(days=settings.DEFAULT_TRAIN_YEARS * 365)
@@ -85,7 +93,7 @@ class ForecastService:
         trading_dates = project_trading_dates(t, anchor_date, h)
 
         # Predict via ML pipeline
-        bundle = predict(ohlcv, t, active_model.artifact_path, trading_dates, requested_horizon=h)
+        bundle = predict(ohlcv, t, str(local_artifact), trading_dates, requested_horizon=h)
 
         # Backdate model leakage risk check
         metadata = bundle.confidence.breakdown.model_dump(mode="json")

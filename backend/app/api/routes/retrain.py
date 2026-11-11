@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, status
 from backend.app.api.auth import require_admin
 from backend.app.schemas.api import RetrainRequest, RetrainStatusResponse
 from backend.app.services.retrain_service import get_job_status, retrain_service
@@ -6,7 +6,7 @@ from backend.app.services.retrain_service import get_job_status, retrain_service
 router = APIRouter()
 
 
-@router.post("/retrain")
+@router.post("/retrain", status_code=status.HTTP_202_ACCEPTED)
 def trigger_retrain(req: RetrainRequest, _admin: dict = Depends(require_admin)):
     try:
         res = retrain_service.trigger_retrain(ticker=req.ticker, force=bool(req.force))

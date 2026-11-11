@@ -1,5 +1,5 @@
 """AUTO-GENERATED from 02_model_architecture.ipynb by scripts/sync_notebooks.py. DO NOT EDIT.
-Source notebook sha256: 4bfb48741110e89a4622b37f76425319467538b4bc0fa896d32ed0b353f85e76
+Source notebook sha256: 9d3237ba716b9ec555164dd819726ac049d12594609b3d0ef3ffc79267a3c4a9
 Edit the notebook, then run: python scripts/sync_notebooks.py
 """
 # ruff: noqa
@@ -28,8 +28,11 @@ class ForecastModel(BaseForecasterContract):
         reg_lambda: float = 5.0,
         tree_method: str = "hist",
         random_state: int = 42,
-        n_jobs: int = -1
+        n_jobs: Optional[int] = None
     ):
+        if n_jobs is None:
+            import os
+            n_jobs = int(os.getenv('XGBOOST_N_JOBS', '2'))
         self.horizon = horizon
         self.quantiles = (0.10, 0.50, 0.90)
         self.params = dict(

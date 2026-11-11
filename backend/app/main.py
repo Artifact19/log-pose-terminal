@@ -74,6 +74,40 @@ def admin_sync_check(_admin: dict = Depends(require_admin)):
     return {"in_sync": in_sync, "message": msg}
 
 
+@app.get("/api/admin/data-check", tags=["Admin"])
+def admin_data_check(_admin: dict = Depends(require_admin)):
+    """Admin endpoint to test Yahoo Finance connectivity from hosting environment."""
+    from datetime import date, timedelta
+    from backend.app.services.data_service import data_service
+    start_date = date.today() - timedelta(days=10)
+    try:
+        df = data_service.fetch_ohlcv("AAPL", start=start_date, force=True)
+        return {
+            "status": "ok",
+            "ticker": "AAPL",
+            "rows": len(df),
+            "start_date": str(df.index[0].date()) if not df.empty else None,
+            "end_date": str(df.index[-1].date()) if not df.empty else None,
+            "latest_close": float(df["Close"].iloc[-1]) if not df.empty else None,
+        }
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+
+@app.post("/api/admin/pretrain-all", tags=["Admin"])
+def admin_pretrain_all(force: bool = False, _admin: dict = Depends(require_admin)):
+    """Admin endpoint to trigger background pre-training across all SUPPORTED_TICKERS."""
+    from backend.app.services.retrain_service import retrain_service
+    jobs = []
+    for t in settings.SUPPORTED_TICKERS:
+        try:
+            res = retrain_service.trigger_retrain(t, force=force, horizon=settings.DEFAULT_HORIZON)
+            jobs.append(res)
+        except Exception as e:
+            jobs.append({"ticker": t, "error": str(e)})
+    return {"message": "Pre-training triggered for supported tickers", "jobs": jobs}
+
+
 @app.get("/")
 def root():
     return {
