@@ -2,7 +2,11 @@ import jwt
 import pytest
 from httpx import ASGITransport, AsyncClient
 from backend.app.config import settings
+from backend.app.db import init_db
 from backend.app.main import app
+
+# Ensure database tables are created for API integration tests
+init_db()
 
 
 TEST_SECRET = "test-secret-at-least-32-bytes-long!!!"
